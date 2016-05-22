@@ -17,7 +17,15 @@ bot.
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
-# from pprint import pprint
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+import numpy as np
+# import matplotlib
+
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 # Enable logging
 logging.basicConfig(
@@ -50,12 +58,29 @@ def image_download(bot, update):
     print update.message.photo[2]
     file_id = update.message.photo[2].file_id
     newFile = bot.getFile(file_id)
-    newFile.download('download.png')
+    newFile.download('./download.jpg')
+    Image.open('./download.jpg').convert('RGB').save('./greyscale.jpg')
+
+    img = Image.open('download.jpg').convert('L')
+    img.save('./greyscale.jpg')
+
+    img = mpimg.imread('./download.jpg')
+    gray = np.dot(img[...,:3], [0.299, 0.587, 0.114])
+    # plt.imshow(gray, cmap = plt.get_cmap('gray'))
+    # plt.imshow(gray, cmap = ('Greys_r'))
+
+    # rawData = open("./greyscale.jpg" 'rb').read()
+    # imgSize = (100,100)
+    # img = Image.fromstring('L', imgSize, rawData, 'raw', 'F;16')
+    # img.save("./greyscale.jpg")
+
+    bot.sendPhoto(update.message.chat_id, photo=open('./greyscale.jpg', 'rb'))
+    print update.message
 
 
 def main():
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater("TOKEN")
+    updater = Updater("225364376:AAHQYlhLB0EomsJpy5EbICkSmyOFg9SB4Ww")
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
