@@ -6,6 +6,7 @@
 
 """
 This Bot uses the Updater class to handle the bot.
+
 First, a few handler functions are defined. Then, those functions are passed to
 the Dispatcher and registered at their respective places.
 Then, the bot is started and runs until we press Ctrl-C on the command line.
@@ -16,16 +17,13 @@ bot.
 """
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+# import numpy as np
+from PIL import Image
+import matplotlib.image as mpimg
 import logging
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-import numpy as np
-# import matplotlib
-
-from PIL import Image
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 
 # Enable logging
 logging.basicConfig(
@@ -38,22 +36,49 @@ logger = logging.getLogger(__name__)
 # Define a few command handlers. These usually take the two arguments bot and
 # update. Error handlers also receive the raised TelegramError object in error.
 def start(bot, update):
+    """
+    Start the party.
+
+    This function gets da partaaaaayyy started
+    Only activated when a new conversation is started with this bot
+    """
     bot.sendMessage(update.message.chat_id, text='Hi!')
 
 
 def help(bot, update):
-    bot.sendMessage(update.message.chat_id, text='Help!')
+    """
+    Some helpful text with the /help command.
+
+    This function should just provide an overview of what commands to use
+    """
+    message = "Simply upload a photo (as a photo, not a file) to get started"
+    bot.sendMessage(update.message.chat_id, text=message)
 
 
 def echo(bot, update):
+    """
+    Repeat any text message as this bot's default behavior.
+
+    This function only serves the purpose of making sure the bot is activated
+    """
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
 
 def error(bot, update, error):
+    """
+    Yield any error to the console.
+
+    Pretty self-explanatory, just check the console for error reports
+    """
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
 
 def image_download(bot, update):
+    """
+    Return images processed using the PIL and matplotlib libraries.
+
+    This function should apply filters similar to Instagram and return images
+    """
     bot.sendMessage(update.message.chat_id, text='upload successful')
     print update.message.photo[2]
     file_id = update.message.photo[2].file_id
@@ -65,10 +90,9 @@ def image_download(bot, update):
     img.save('./greyscale.jpg')
 
     img = mpimg.imread('./download.jpg')
-    gray = np.dot(img[...,:3], [0.299, 0.587, 0.114])
+    # gray = np.dot(img[...,:3], [0.299, 0.587, 0.114])
     # plt.imshow(gray, cmap = plt.get_cmap('gray'))
     # plt.imshow(gray, cmap = ('Greys_r'))
-
     # rawData = open("./greyscale.jpg" 'rb').read()
     # imgSize = (100,100)
     # img = Image.fromstring('L', imgSize, rawData, 'raw', 'F;16')
@@ -79,6 +103,11 @@ def image_download(bot, update):
 
 
 def main():
+    """
+    Execute all commands in this function (the brains of the bot).
+
+    This function contains all the general features of the bot
+    """
     # Create the EventHandler and pass it your bot's token.
     updater = Updater("225364376:AAHQYlhLB0EomsJpy5EbICkSmyOFg9SB4Ww")
 
