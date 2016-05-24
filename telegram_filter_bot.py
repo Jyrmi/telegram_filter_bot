@@ -17,13 +17,24 @@ bot.
 """
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-# import numpy as np
 from PIL import Image
-import matplotlib.image as mpimg
+from PIL import ImageFilter
 import logging
+
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+filters = {
+    'blur': ImageFilter.BLUR,
+    'contour': ImageFilter.CONTOUR,
+    'detail': ImageFilter.DETAIL,
+    'edge_enhance': ImageFilter.EDGE_ENHANCE,
+    'edge_enhance_more': ImageFilter.EDGE_ENHANCE_MORE,
+    'emboss': ImageFilter.EMBOSS,
+    'find_edges': ImageFilter.FIND_EDGES,
+    'smooth': ImageFilter.SMOOTH,
+    'smooth_more': ImageFilter.SMOOTH_MORE
+}
 
 # Enable logging
 logging.basicConfig(
@@ -42,7 +53,7 @@ def start(bot, update):
     This function gets da partaaaaayyy started
     Only activated when a new conversation is started with this bot
     """
-    bot.sendMessage(update.message.chat_id, text='Hi!')
+    bot.sendMessage(update.message.chat_id, text='Hi! Do you need /help? Check out my /filters!')
 
 
 def help(bot, update):
@@ -51,8 +62,13 @@ def help(bot, update):
 
     This function should just provide an overview of what commands to use
     """
-    message = "Simply upload a photo (as a photo, not a file) to get started"
-    bot.sendMessage(update.message.chat_id, text=message)
+    message = ("Simply upload a photo (as a photo, not a file) to get started.\n"
+        "Provide the filters you want to use in the caption of your image.\n"
+        "You can string filters together and they will be applied in order,\n"
+        "e.g. \"detail smooth blur greyscale\"\n"
+        "Here are the filters we have:\n\n" + ', '.join(filters.keys()))
+
+    bot.sendMessage(update.message.chat_id, message)
 
 
 def echo(bot, update):
@@ -63,7 +79,6 @@ def echo(bot, update):
     """
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
-
 def error(bot, update, error):
     """
     Yield any error to the console.
@@ -72,35 +87,71 @@ def error(bot, update, error):
     """
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
-
-def image_download(bot, update):
+def filter_image(bot, update):
     """
     Return images processed using the PIL and matplotlib libraries.
 
     This function should apply filters similar to Instagram and return images
     """
-    bot.sendMessage(update.message.chat_id, text='upload successful')
-    print update.message.photo[2]
-    file_id = update.message.photo[2].file_id
+    # bot.sendMessage(update.message.chat_id, text='upload successful')
+    # img = Image.open('download.jpg').convert('L')
+
+    # Get the largest of the three images created by Telegram
+    file_id = update.message.photo[-1].file_id
+    
     newFile = bot.getFile(file_id)
+    applied_filters = []
+    invalid_filters = []
     newFile.download('./download.jpg')
-    Image.open('./download.jpg').convert('RGB').save('./greyscale.jpg')
+    img = Image.open('./download.jpg')
 
-    img = Image.open('download.jpg').convert('L')
-    img.save('./greyscale.jpg')
+    # No filter provided. Use a default filter.
+    reply = ', '.join(filters.keys())
+    if not update.message.caption:
+        reply = ('Please provide the name of the filter you would like to'
+        ' use in the image\'s caption. Filters:\n\n' + reply)
 
-    img = mpimg.imread('./download.jpg')
-    # gray = np.dot(img[...,:3], [0.299, 0.587, 0.114])
-    # plt.imshow(gray, cmap = plt.get_cmap('gray'))
-    # plt.imshow(gray, cmap = ('Greys_r'))
-    # rawData = open("./greyscale.jpg" 'rb').read()
-    # imgSize = (100,100)
-    # img = Image.fromstring('L', imgSize, rawData, 'raw', 'F;16')
-    # img.save("./greyscale.jpg")
+        # Notify the user of invalid input
+        bot.sendMessage(update.message.chat_id, text=reply)
 
-    bot.sendPhoto(update.message.chat_id, photo=open('./greyscale.jpg', 'rb'))
-    print update.message
+        img = img.convert('L')
+        img.save('./filtered.jpg')
+        bot.sendPhoto(update.message.chat_id,
+            photo=open('./filtered.jpg', 'rb'), caption=('Meanwhile, here\'s '
+                'your image in greyscale.'))
+        return
 
+    caption = update.message.caption.lower().split(' ')
+    for f in caption:
+
+        # Image.convert can easily turn an image into greyscale
+        if f == 'greyscale':
+            img = img.convert('L')
+            applied_filters.append(f)
+
+        # The specified filter is one of the ImageFilter module ones
+        elif f in filters:
+            img = img.filter(filters[f])
+            applied_filters.append(f)
+
+        # The filter isn't supported
+        else:
+            invalid_filters.append(f)
+
+    # Notify the user of unsupported filters
+    if invalid_filters:
+        reply = ('Sorry, we don\'t have the %s filter(s). Filters:\n\n' %
+            ', '.join(invalid_filters) + reply)
+
+        bot.sendMessage(update.message.chat_id, text=reply)
+
+    img.save('./filtered.jpg')
+    if applied_filters:
+        bot.sendPhoto(update.message.chat_id,
+            photo=open('./filtered.jpg', 'rb'), caption=' '.join(applied_filters))
+
+def list_filters(bot, update):
+    bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
 
 def main():
     """
@@ -117,12 +168,13 @@ def main():
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("filters", list_filters))
 
     # on noncommand i.e message - echo the message on Telegram
     dp.add_handler(MessageHandler([Filters.text], echo))
 
-    # on file upload
-    dp.add_handler(MessageHandler([Filters.photo], image_download))
+    # on image upload
+    dp.add_handler(MessageHandler([Filters.photo], filter_image))
 
     # log all errors
     dp.add_error_handler(error)
