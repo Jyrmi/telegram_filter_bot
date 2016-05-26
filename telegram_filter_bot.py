@@ -19,6 +19,7 @@ bot.
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from PIL import Image
 from PIL import ImageFilter
+from PIL import ImageOps
 import logging
 
 logger = logging.getLogger()
@@ -53,7 +54,8 @@ def start(bot, update):
     This function gets da partaaaaayyy started
     Only activated when a new conversation is started with this bot
     """
-    bot.sendMessage(update.message.chat_id, text='Hi! Do you need /help? Check out my /filters!')
+    message = 'Hi! Do you need /help? Check out my /filters!'
+    bot.sendMessage(update.message.chat_id, text=message)
 
 
 def help(bot, update):
@@ -62,7 +64,8 @@ def help(bot, update):
 
     This function should just provide an overview of what commands to use
     """
-    message = ("Simply upload a photo (as a photo, not a file) to get started.\n"
+    message = (
+        "Simply upload a photo (as a photo, not a file) to get started.\n"
         "Provide the filters you want to use in the caption of your image.\n"
         "You can string filters together and they will be applied in order,\n"
         "e.g. \"detail smooth blur greyscale\"\n"
@@ -79,6 +82,7 @@ def echo(bot, update):
     """
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
+
 def error(bot, update, error):
     """
     Yield any error to the console.
@@ -86,6 +90,7 @@ def error(bot, update, error):
     Pretty self-explanatory, just check the console for error reports
     """
     logger.warn('Update "%s" caused error "%s"' % (update, error))
+
 
 def filter_image(bot, update):
     """
@@ -98,18 +103,20 @@ def filter_image(bot, update):
 
     # Get the largest of the three images created by Telegram
     file_id = update.message.photo[-1].file_id
-    
+
     newFile = bot.getFile(file_id)
     applied_filters = []
     invalid_filters = []
     newFile.download('./download.jpg')
     img = Image.open('./download.jpg')
+    img_inv = Image.open('./download.jpg')
 
     # No filter provided. Use a default filter.
     reply = ', '.join(filters.keys())
     if not update.message.caption:
-        reply = ('Please provide the name of the filter you would like to'
-        ' use in the image\'s caption. Filters:\n\n' + reply)
+        msg_part_1 = 'Please provide the name of the filter you would like to'
+        msg_part_2 = 'use in the image\'s caption. Filters:\n\n'
+        reply = msg_part_1 + msg_part_2 + reply
 
         # Notify the user of invalid input
         bot.sendMessage(update.message.chat_id, text=reply)
@@ -117,11 +124,18 @@ def filter_image(bot, update):
         img = img.convert('L')
         img.save('./filtered.jpg')
         bot.sendPhoto(update.message.chat_id,
-            photo=open('./filtered.jpg', 'rb'), caption=('Meanwhile, here\'s '
-                'your image in greyscale.'))
+                      photo=open('./filtered.jpg', 'rb'),
+                      caption=('Meanwhile, here\'s your image in greyscale.'))
+
+        img_inv = ImageOps.invert(img_inv)
+        img_inv.save('./inverted_image.jpg')
+        bot.sendPhoto(update.message.chat_id,
+                      photo=open('./inverted_image.jpg', 'rb'),
+                      caption=('...and, here\'s your image inverted.'))
+
         return
 
-    caption = update.message.caption.lower().split(' ')
+    caption = update.message.caption.lower().replace(',', '').split(' ')
     for f in caption:
 
         # Image.convert can easily turn an image into greyscale
@@ -148,10 +162,18 @@ def filter_image(bot, update):
     img.save('./filtered.jpg')
     if applied_filters:
         bot.sendPhoto(update.message.chat_id,
-            photo=open('./filtered.jpg', 'rb'), caption=' '.join(applied_filters))
+                      photo=open('./filtered.jpg', 'rb'),
+                      caption=' '.join(applied_filters))
+
 
 def list_filters(bot, update):
+    """
+    Show all available filters.
+
+    This function will simply show the user all the filters he/she can choose
+    """
     bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
+
 
 def main():
     """
