@@ -155,7 +155,7 @@ def filter_image(bot, update):
     # Notify the user of unsupported filters
     if invalid_filters:
         reply = ('Sorry, we don\'t have the %s filter(s). Filters:\n\n' %
-            ', '.join(invalid_filters) + reply)
+                 ', '.join(invalid_filters) + reply)
 
         bot.sendMessage(update.message.chat_id, text=reply)
 
