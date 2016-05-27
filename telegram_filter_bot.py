@@ -109,7 +109,6 @@ def filter_image(bot, update):
     invalid_filters = []
     newFile.download('./download.jpg')
     img = Image.open('./download.jpg')
-    img_inv = Image.open('./download.jpg')
 
     # No filter provided. Use a default filter.
     reply = ', '.join(filters.keys())
@@ -121,8 +120,8 @@ def filter_image(bot, update):
         # Notify the user of invalid input
         bot.sendMessage(update.message.chat_id, text=reply)
 
-        img = img.convert('L')
-        img.save('./filtered.jpg')
+        img_greyscale = img.convert('L')
+        img_greyscale.save('./filtered.jpg')
         bot.sendPhoto(update.message.chat_id,
                       photo=open('./filtered.jpg', 'rb'),
                       caption=('Meanwhile, here\'s your image in greyscale.'))
@@ -130,7 +129,7 @@ def filter_image(bot, update):
         # make sepia ramp (tweak color as necessary)
         sepia = make_linear_ramp((255, 220, 192))
         # optional: apply contrast enhancement here, e.g.
-        img_sepia = ImageOps.autocontrast(img)
+        img_sepia = ImageOps.autocontrast(img_greyscale)
         # apply sepia palette
         img_sepia.putpalette(sepia)
         # convert back to RGB so we can save it as JPEG
@@ -141,7 +140,7 @@ def filter_image(bot, update):
                       photo=open('./sepia_image.jpg', 'rb'),
                       caption=('...and, here\'s your image in sepia.'))
 
-        img_inv = ImageOps.invert(img_inv)
+        img_inv = ImageOps.invert(img)
         img_inv.save('./inverted_image.jpg')
         bot.sendPhoto(update.message.chat_id,
                       photo=open('./inverted_image.jpg', 'rb'),
@@ -190,6 +189,11 @@ def list_filters(bot, update):
 
 
 def make_linear_ramp(white):
+    """
+    Create a general color mask, used for the sepia filter for example.
+
+    This function will simply return a color mask to be used on any filter
+    """
     # putpalette expects [r,g,b,r,g,b,...]
     ramp = []
     r, g, b = white
