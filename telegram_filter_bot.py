@@ -17,13 +17,28 @@ bot.
 """
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import ForceReply, ReplyKeyboardMarkup, KeyboardButton
 from PIL import Image
 from PIL import ImageFilter
 from PIL import ImageOps
 import logging
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+
+# Define the different states a chat can be in
+MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION = range(3)
+
+# Define the filter names here
+FILTER_1, FILTER_2, FILTER_3 = ("FILTER_1", "FILTER_2", "FILTER_3")
+
+# States are saved in a dict that maps chat_id -> state
+state = dict()
+# Sometimes you need to save data temporarily
+context = dict()
+# This dict is used to store the settings value for the chat.
+# Usually, you'd use persistence for this (e.g. sqlite).
+values = dict()
 
 filters = {
     'blur': ImageFilter.BLUR,
@@ -201,6 +216,59 @@ def make_linear_ramp(white):
         ramp.extend((r*i/255, g*i/255, b*i/255))
     return ramp
 
+def cancel(bot, update):
+    """
+    Cancel out this user's state, whatever the current operation.
+
+    This function will clear out the state and context key-value pairs for this
+    user
+    """
+    chat_id = update.message.chat_id
+    del state[chat_id]
+    del context[chat_id]
+
+def set_value(bot, update):
+    chat_id = update.message.chat_id
+    user_id = update.message.from_user.id
+    text = update.message.text
+    chat_state = state.get(chat_id, MENU)
+    chat_context = context.get(chat_id, None)
+
+    # Since the handler will also be called on messages, we need to check if
+    # the message is actually a command
+    if chat_state == MENU and 'test' in text:
+        state[chat_id] = AWAIT_FILTER_INPUT # set the state
+        context[chat_id] = user_id  # save the user id to context
+        bot.sendMessage(chat_id,
+                        text="Hi there, what filter(s) would you like to apply?\n"
+                        "type /cancel to end this conversation",
+                        reply_markup=ForceReply())
+    # If we are waiting for input and the right user answered
+    # MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION
+    elif chat_state == AWAIT_FILTER_INPUT and chat_context == user_id:
+        state[chat_id] = AWAIT_FILTER_CONFIRMATION
+        # Save the user id and the answer to context
+        context[chat_id] = (user_id, update.message.text)
+        reply_markup = ReplyKeyboardMarkup(
+            [[KeyboardButton(FILTER_1), KeyboardButton(FILTER_2), KeyboardButton(FILTER_3)]],
+            one_time_keyboard=True)
+        bot.sendMessage(chat_id,
+                        text="Okay, just to confirm, you would like the following filters: " + text + ", is that correct?",
+                        reply_markup=reply_markup)
+    # If we are waiting for confirmation and the right user answered
+    elif chat_state == AWAIT_FILTER_CONFIRMATION and chat_context[0] == user_id:
+        del state[chat_id]
+        del context[chat_id]
+        if text == FILTER_1:
+            values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="FILTER_1 has been selected.")
+        elif text == FILTER_2:
+            values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="FILTER_2 has been selected.")
+        elif text == FILTER_3:
+            values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="FILTER_3 has been selected.")
+
 
 def main():
     """
@@ -219,8 +287,10 @@ def main():
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("filters", list_filters))
 
-    # on noncommand i.e message - echo the message on Telegram
-    dp.add_handler(MessageHandler([Filters.text], echo))
+    updater.dispatcher.add_handler(CommandHandler('test', set_value))
+
+    # The answer and confirmation
+    updater.dispatcher.add_handler(MessageHandler([Filters.text], set_value))
 
     # on image upload
     dp.add_handler(MessageHandler([Filters.photo], filter_image))
