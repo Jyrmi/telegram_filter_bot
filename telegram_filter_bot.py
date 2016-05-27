@@ -127,6 +127,20 @@ def filter_image(bot, update):
                       photo=open('./filtered.jpg', 'rb'),
                       caption=('Meanwhile, here\'s your image in greyscale.'))
 
+        # make sepia ramp (tweak color as necessary)
+        sepia = make_linear_ramp((255, 220, 192))
+        # optional: apply contrast enhancement here, e.g.
+        img_sepia = ImageOps.autocontrast(img)
+        # apply sepia palette
+        img_sepia.putpalette(sepia)
+        # convert back to RGB so we can save it as JPEG
+        # (alternatively, save it in PNG or similar)
+        img_sepia = img_sepia.convert("RGB")
+        img_sepia.save("./sepia_image.jpg")
+        bot.sendPhoto(update.message.chat_id,
+                      photo=open('./sepia_image.jpg', 'rb'),
+                      caption=('...and, here\'s your image in sepia.'))
+
         img_inv = ImageOps.invert(img_inv)
         img_inv.save('./inverted_image.jpg')
         bot.sendPhoto(update.message.chat_id,
@@ -173,6 +187,15 @@ def list_filters(bot, update):
     This function will simply show the user all the filters he/she can choose
     """
     bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
+
+
+def make_linear_ramp(white):
+    # putpalette expects [r,g,b,r,g,b,...]
+    ramp = []
+    r, g, b = white
+    for i in range(255):
+        ramp.extend((r*i/255, g*i/255, b*i/255))
+    return ramp
 
 
 def main():
