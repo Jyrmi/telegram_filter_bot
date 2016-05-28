@@ -25,10 +25,13 @@ import logging
 import thread
 from flask import Flask
 import sendgrid
+import os
+
+is_prod = os.environ.get('IS_HEROKU', None)
 
 app = Flask(__name__)
 
-sg = sendgrid.SendGridClient('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')
+sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -355,7 +358,7 @@ def main():
     This function contains all the general features of the bot
     """
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater("225364376:AAHQYlhLB0EomsJpy5EbICkSmyOFg9SB4Ww")
+    updater = Updater(os.environ['TELEGRAM_KEY'])
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -386,5 +389,5 @@ def main():
     updater.idle()
 
 if __name__ == '__main__':
-    thread.start_new_thread(app.run, (host='0.0.0.0', port=3000))
+    thread.start_new_thread(app.run, ('0.0.0.0', 3000))
     main()
