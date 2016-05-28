@@ -1,4 +1,5 @@
 cycler==0.10.0
+Django==1.9.6
 Flask==0.10.1
 future==0.15.2
 gunicorn==19.6.0
@@ -12,4 +13,8 @@ pyparsing==2.1.4
 python-dateutil==2.5.3
 python-http-client==1.2.3
 python-telegram-bot==4.1.2
-sendgrid==2.2.1
+pytz==2016.4
+six==1.10.0
+smtpapi==0.3.1
+Unirest==1.1.7
+Werkzeug==0.11.10
