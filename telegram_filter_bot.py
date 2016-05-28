@@ -22,15 +22,24 @@ from PIL import Image
 from PIL import ImageFilter
 from PIL import ImageOps
 import logging
+import thread
+from flask import Flask
+import sendgrid
+
+app = Flask(__name__)
+
+sg = sendgrid.SendGridClient('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')
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 # Define the different states a chat can be in
 MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION = range(3)
+AWAIT_EMAIL_INPUT, AWAIT_EMAIL_CONFIRMATION = range(3, 5)
 
 # Define the filter names here
 FILTER_1, FILTER_2, FILTER_3 = ("FILTER_1", "FILTER_2", "FILTER_3")
+YES, NO = ("YES", "NO")
 
 # States are saved in a dict that maps chat_id -> state
 state = dict()
@@ -59,6 +68,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+@app.route('/')
+def hello_world():
+    return 'Hello World!'
 
 # Define a few command handlers. These usually take the two arguments bot and
 # update. Error handlers also receive the raised TelegramError object in error.
@@ -270,6 +282,72 @@ def set_value(bot, update):
             bot.sendMessage(chat_id, text="FILTER_3 has been selected.")
 
 
+def use_sendgrid(bot, update, email_address):
+    html_message = "<b>Random Message</b>"
+    message = sendgrid.Mail()
+    message.add_to(email_address)
+    message.set_subject('Random Message Test')
+    message.set_html(html_message)
+    # message.set_text('Body')
+    message.set_from('josephchoi@ateamventures.com')
+    message.add_attachment('filtered.jpg', open('filtered.jpg', 'rb'))
+    message.add_attachment('sepia_image.jpg', open('sepia_image.jpg', 'rb'))
+    message.add_attachment('inverted_image.jpg', open('inverted_image.jpg', 'rb'))
+    status, msg = sg.send(message)
+    print(status, msg)
+    if status == 200:
+        success_msg = "<b>Your photos have been emailed successfully!</b>\n"
+        bot.sendMessage(update.message.chat_id,
+                        text=success_msg,
+                        parse_mode="HTML")
+    else:
+        fail_msg = "<b>There was a problem emailing your photos...</b>\n"
+        bot.sendMessage(update.message.chat_id,
+                        text=fail_msg,
+                        parse_mode="HTML")
+
+
+def get_email(bot, update):
+    chat_id = update.message.chat_id
+    user_id = update.message.from_user.id
+    text = update.message.text
+    chat_state = state.get(chat_id, MENU)
+    chat_context = context.get(chat_id, None)
+
+    # Since the handler will also be called on messages, we need to check if
+    # the message is actually a command
+    if chat_state == MENU and 'email' in text:
+        state[chat_id] = AWAIT_EMAIL_INPUT # set the state
+        context[chat_id] = user_id  # save the user id to context
+        bot.sendMessage(chat_id,
+                        text="Hi there, please input your email!\n"
+                        "type /cancel to end this conversation",
+                        reply_markup=ForceReply())
+    # If we are waiting for input and the right user answered
+    # MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION
+    elif chat_state == AWAIT_EMAIL_INPUT and chat_context == user_id:
+        state[chat_id] = AWAIT_EMAIL_CONFIRMATION
+        # Save the user id and the answer to context
+        context[chat_id] = (user_id, update.message.text)
+        reply_markup = ReplyKeyboardMarkup(
+            [[KeyboardButton(YES), KeyboardButton(NO)]],
+            one_time_keyboard=True)
+        bot.sendMessage(chat_id,
+                        text="Okay, just to confirm, your email is: " + text + ", is that correct?",
+                        reply_markup=reply_markup)
+    # If we are waiting for confirmation and the right user answered
+    elif chat_state == AWAIT_EMAIL_CONFIRMATION and chat_context[0] == user_id:
+        del state[chat_id]
+        del context[chat_id]
+        if text == YES:
+            values[chat_id] = chat_context[1]
+            use_sendgrid(bot, update, values[chat_id])
+            bot.sendMessage(chat_id, text="An email has been sent to " + values[chat_id])
+        else:
+            values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="Okay, no email was sent.")
+
+
 def main():
     """
     Execute all commands in this function (the brains of the bot).
@@ -286,11 +364,12 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("filters", list_filters))
-
-    updater.dispatcher.add_handler(CommandHandler('test', set_value))
+    dp.add_handler(CommandHandler('test', set_value))
+    dp.add_handler(CommandHandler('use_sendgrid', use_sendgrid))
+    dp.add_handler(CommandHandler('email', get_email))
 
     # The answer and confirmation
-    updater.dispatcher.add_handler(MessageHandler([Filters.text], set_value))
+    dp.add_handler(MessageHandler([Filters.text], get_email))
 
     # on image upload
     dp.add_handler(MessageHandler([Filters.photo], filter_image))
@@ -307,4 +386,5 @@ def main():
     updater.idle()
 
 if __name__ == '__main__':
+    thread.start_new_thread(app.run, ())
     main()
