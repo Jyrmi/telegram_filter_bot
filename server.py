@@ -26,5 +26,5 @@ def webhook_handler():
 
 
 if __name__ == '__main__':
-    bot.setWebhook('https://shrouded-everglades-90342.herokuapp.com/HOOK')
+    bot.setWebhook('https://pacific-basin-72105.herokuapp.com/HOOK')
     app.run(host='0.0.0.0', port=3000)
