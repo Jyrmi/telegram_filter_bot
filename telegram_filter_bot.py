@@ -23,18 +23,18 @@ from PIL import ImageFilter
 from PIL import ImageOps
 import logging
 import thread
-# from flask import Flask
-# import sendgrid
+from flask import Flask
+import sendgrid
 import os
 
-# is_prod = os.environ.get('IS_HEROKU', None)
+is_prod = os.environ.get('IS_HEROKU', None)
 
-# app = Flask(__name__)
+app = Flask(__name__)
 
-# sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
+sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
 
-# logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    # level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
 # Define the different states a chat can be in
 MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION = range(3)
