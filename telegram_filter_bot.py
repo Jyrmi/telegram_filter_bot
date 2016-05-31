@@ -16,22 +16,23 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
+import os
+import logging
+import sendgrid
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ForceReply, ReplyKeyboardMarkup, KeyboardButton
 from PIL import Image
 from PIL import ImageFilter
 from PIL import ImageOps
-import logging
-import thread
-from flask import Flask
-import sendgrid
-import os
+# import thread
+# from flask import Flask
 
-is_prod = os.environ.get('IS_HEROKU', None)
+# is_prod = os.environ.get('IS_HEROKU', None)
 
-app = Flask(__name__)
+# app = Flask(__name__)
 
-sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
+# sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
+sg = sendgrid.SendGridClient('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')
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -44,10 +45,8 @@ AWAIT_EMAIL_INPUT, AWAIT_EMAIL_CONFIRMATION = range(3, 5)
 FILTER_1, FILTER_2, FILTER_3 = ("FILTER_1", "FILTER_2", "FILTER_3")
 YES, NO = ("YES", "NO")
 
-# States are saved in a dict that maps chat_id -> state
-state = dict()
-# Sometimes you need to save data temporarily
-context = dict()
+state = dict() # States are saved in a dict that maps chat_id -> state
+context = dict() # Sometimes you need to save data temporarily
 # This dict is used to store the settings value for the chat.
 # Usually, you'd use persistence for this (e.g. sqlite).
 values = dict()
@@ -71,9 +70,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
+# @app.route('/')
+# def hello_world():
+#     return 'Hello World!'
 
 # Define a few command handlers. These usually take the two arguments bot and
 # update. Error handlers also receive the raised TelegramError object in error.
@@ -132,28 +131,32 @@ def filter_image(bot, update):
     # img = Image.open('download.jpg').convert('L')
 
     # Get the largest of the three images created by Telegram
+    chat_id = str(update.message.chat_id)
     file_id = update.message.photo[-1].file_id
-
-    newFile = bot.getFile(file_id)
     applied_filters = []
     invalid_filters = []
-    newFile.download('./download.jpg')
-    img = Image.open('./download.jpg')
+
+    if not os.path.exists(chat_id):
+        os.makedirs(chat_id)
+
+    bot.getFile(file_id).download(chat_id+'/download.jpg')
+    img = Image.open(chat_id+'/download.jpg')
 
     # No filter provided. Use a default filter.
     reply = ', '.join(filters.keys())
     if not update.message.caption:
-        msg_part_1 = 'Please provide the name of the filter you would like to'
+        msg_part_1 = 'Please provide the name of the filter you would like to '
         msg_part_2 = 'use in the image\'s caption. Filters:\n\n'
         reply = msg_part_1 + msg_part_2 + reply
 
         # Notify the user of invalid input
         bot.sendMessage(update.message.chat_id, text=reply)
 
+        # Send sample filtered images in this scenario
         img_greyscale = img.convert('L')
-        img_greyscale.save('./filtered.jpg')
+        img_greyscale.save(chat_id+'/filtered.jpg')
         bot.sendPhoto(update.message.chat_id,
-                      photo=open('./filtered.jpg', 'rb'),
+                      photo=open(chat_id+'/filtered.jpg', 'rb'),
                       caption=('Meanwhile, here\'s your image in greyscale.'))
 
         # make sepia ramp (tweak color as necessary)
@@ -164,16 +167,16 @@ def filter_image(bot, update):
         img_sepia.putpalette(sepia)
         # convert back to RGB so we can save it as JPEG
         # (alternatively, save it in PNG or similar)
-        img_sepia = img_sepia.convert("RGB")
-        img_sepia.save("./sepia_image.jpg")
+        img_sepia = img_sepia.convert('RGB')
+        img_sepia.save(chat_id+'/sepia.jpg')
         bot.sendPhoto(update.message.chat_id,
-                      photo=open('./sepia_image.jpg', 'rb'),
+                      photo=open(chat_id+'/sepia.jpg', 'rb'),
                       caption=('...and, here\'s your image in sepia.'))
 
         img_inv = ImageOps.invert(img)
-        img_inv.save('./inverted_image.jpg')
+        img_inv.save(chat_id+'/inverted.jpg')
         bot.sendPhoto(update.message.chat_id,
-                      photo=open('./inverted_image.jpg', 'rb'),
+                      photo=open(chat_id+'/inverted.jpg', 'rb'),
                       caption=('...and, here\'s your image inverted.'))
 
         return
@@ -182,9 +185,25 @@ def filter_image(bot, update):
     for f in caption:
 
         # Image.convert can easily turn an image into greyscale
-        if f == 'greyscale':
+        if 'greyscale' in f:
             img = img.convert('L')
             applied_filters.append(f)
+
+        # Apply a sepia-tone filter
+        elif 'sepia' in f:
+            img = img.convert('L')
+            # make sepia ramp (tweak color as necessary)
+            sepia = make_linear_ramp((255, 220, 192))
+            # optional: apply contrast enhancement here, e.g.
+            img = ImageOps.autocontrast(img)
+            # apply sepia palette
+            img.putpalette(sepia)
+            img = img.convert("RGB")
+            applied_filters.append('sepia-tone')
+
+        elif 'invert' in f:
+            img = ImageOps.invert(img)
+            applied_filters.append('inverted')
 
         # The specified filter is one of the ImageFilter module ones
         elif f in filters:
@@ -202,10 +221,10 @@ def filter_image(bot, update):
 
         bot.sendMessage(update.message.chat_id, text=reply)
 
-    img.save('./filtered.jpg')
+    img.save(chat_id+'/filtered.jpg')
     if applied_filters:
         bot.sendPhoto(update.message.chat_id,
-                      photo=open('./filtered.jpg', 'rb'),
+                      photo=open(chat_id+'/filtered.jpg', 'rb'),
                       caption=' '.join(applied_filters))
 
 
@@ -286,16 +305,18 @@ def set_value(bot, update):
 
 
 def use_sendgrid(bot, update, email_address):
-    html_message = "<b>Random Message</b>"
+    chat_id = str(update.message.chat_id)
+    html_message = '<b>Enjoy!</b>'
     message = sendgrid.Mail()
     message.add_to(email_address)
-    message.set_subject('Random Message Test')
+    message.set_subject('your filtered photos')
     message.set_html(html_message)
     # message.set_text('Body')
-    message.set_from('josephchoi@ateamventures.com')
-    message.add_attachment('filtered.jpg', open('filtered.jpg', 'rb'))
-    message.add_attachment('sepia_image.jpg', open('sepia_image.jpg', 'rb'))
-    message.add_attachment('inverted_image.jpg', open('inverted_image.jpg', 'rb'))
+    message.set_from('telegram_filter_bot')
+    message.add_attachment('filtered.jpg', open(chat_id+'/filtered.jpg', 'rb'))
+    # message.add_attachment('filtered.jpg', open(chat_id+'/filtered.jpg', 'rb'))
+    # message.add_attachment('sepia.jpg', open(chat_id+'/sepia.jpg', 'rb'))
+    # message.add_attachment('inverted.jpg', open(chat_id+'/inverted.jpg', 'rb'))
     status, msg = sg.send(message)
     print(status, msg)
     if status == 200:
@@ -336,7 +357,7 @@ def get_email(bot, update):
             [[KeyboardButton(YES), KeyboardButton(NO)]],
             one_time_keyboard=True)
         bot.sendMessage(chat_id,
-                        text="Okay, just to confirm, your email is: " + text + ", is that correct?",
+                        text="Okay, just to confirm, I'm sending your photos to: " + text + ", is that correct?",
                         reply_markup=reply_markup)
     # If we are waiting for confirmation and the right user answered
     elif chat_state == AWAIT_EMAIL_CONFIRMATION and chat_context[0] == user_id:
@@ -351,12 +372,12 @@ def get_email(bot, update):
             bot.sendMessage(chat_id, text="Okay, no email was sent.")
 
 
-def set_webhook(bot):
-    s = bot.setWebhook('https://shrouded-everglades-90342.herokuapp.com/HOOK')
-    if s:
-        return "webhook setup ok"
-    else:
-        return "webhook setup failed"
+# def set_webhook(bot):
+#     s = bot.setWebhook('https://shrouded-everglades-90342.herokuapp.com/HOOK')
+#     if s:
+#         return "webhook setup ok"
+#     else:
+#         return "webhook setup failed"
 
 
 def main():
@@ -366,7 +387,8 @@ def main():
     This function contains all the general features of the bot
     """
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater(os.environ['TELEGRAM_KEY'])
+    # updater = Updater(os.environ['TELEGRAM_KEY'])
+    updater = Updater('225364376:AAHQYlhLB0EomsJpy5EbICkSmyOFg9SB4Ww')
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -397,5 +419,5 @@ def main():
     updater.idle()
 
 if __name__ == '__main__':
-    thread.start_new_thread(app.run, ('0.0.0.0', 3000))
+    # thread.start_new_thread(app.run, ('0.0.0.0', 3000))
     main()
