@@ -70,7 +70,6 @@ smtpapi==0.3.1
 Sphinx==1.3.6
 sphinx-rtd-theme==0.1.9
 tornado==4.2.1
-urlgrabber==3.9.1
 urllib3==1.13.1
 vboxapi==1.0
 Werkzeug==0.11.10
