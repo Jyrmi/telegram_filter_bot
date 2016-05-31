@@ -43,8 +43,9 @@ def webhook_handler():
         if text == '/start':
             start(update)
 
-        # # repeat the same message back (echo)
-        # bot.sendMessage(chat_id=chat_id, text=text)
+        else:
+            # repeat the same message back (echo)
+            bot.sendMessage(chat_id=chat_id, text=text)
 
 
 if __name__ == '__main__':
