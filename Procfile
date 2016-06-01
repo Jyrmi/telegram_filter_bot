@@ -1,1 +1,1 @@
-web: gunicorn server:app --log-file -
+web: gunicorn telegram_filter_bot:app --log-file -

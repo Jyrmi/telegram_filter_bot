@@ -31,8 +31,7 @@ from PIL import ImageOps
 
 # app = Flask(__name__)
 
-# sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
-sg = sendgrid.SendGridClient('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')
+sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -387,8 +386,7 @@ def main():
     This function contains all the general features of the bot
     """
     # Create the EventHandler and pass it your bot's token.
-    # updater = Updater(os.environ['TELEGRAM_KEY'])
-    updater = Updater('225364376:AAHQYlhLB0EomsJpy5EbICkSmyOFg9SB4Ww')
+    updater = Updater(os.environ['TELEGRAM_KEY'])
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
