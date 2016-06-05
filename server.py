@@ -28,9 +28,11 @@ def webhook_handler():
 
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
-
-        change_attribute("test_subject", "test_key", text)
-
+        try:
+            change_attribute("test_subject", "test_key", text)
+        except Exception as e:
+            print "firebase patch failed"
+            print str(e)
         # repeat the same message back (echo)
         bot.sendMessage(chat_id=chat_id, text=text)
 
