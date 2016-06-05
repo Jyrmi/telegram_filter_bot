@@ -19,3 +19,4 @@ smtpapi==0.3.1
 Unirest==1.1.7
 Werkzeug==0.11.10
 python-firebase==1.2
+sendgrid==2.2.1
