@@ -3,6 +3,14 @@
 import telegram
 from flask import Flask, request
 import os
+from PIL import Image, ImageFilter, ImageOps
+import logging
+import sendgrid
+from firebase import firebase
+
+# Firebase is used to track user state and information
+firebase_db = os.environ['FIREBASE_DB']
+firebase = firebase.FirebaseApplication(firebase_db, None)
 
 app = Flask(__name__)
 
@@ -21,6 +29,8 @@ def webhook_handler():
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
 
+        change_attribute("test_subject", "test_key", text)
+
         # repeat the same message back (echo)
         bot.sendMessage(chat_id=chat_id, text=text)
 
@@ -34,6 +44,10 @@ def set_webhook():
         return "webhook setup ok"
     else:
         return "webhook setup failed"
+
+
+def change_attribute(subject, key, value):
+    firebase.patch('/users/' + subject + '/', data={key: value})
 
 
 @app.route('/')
