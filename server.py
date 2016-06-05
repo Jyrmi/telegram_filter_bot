@@ -1,13 +1,21 @@
-#!/usr/bin/env python
 
 import telegram
-from flask import Flask, request
 import os
+from flask import Flask, request
 
 app = Flask(__name__)
 
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
+
+@app.route('/')
+def hello_world():
+    return 'Hello World!'
+
+
+@app.route('/alternate')
+def hello_alternate():
+    return 'Hello from the alternate universe!!!!'
 
 
 @app.route('/HOOK', methods=['POST'])
@@ -27,11 +35,15 @@ def webhook_handler():
     return 'ok'
 
 
-@app.route('/')
-def index():
-    return '.'
+# @app.route('/', methods=['GET', 'POST'])
+def set_webhook():
+    s = bot.setWebhook('https://shrouded-everglades-90342.herokuapp.com/HOOK')
+    if s:
+        return "webhook setup ok"
+    else:
+        return "webhook setup failed"
+
 
 if __name__ == '__main__':
-    bot.setWebhook('https://shrouded-everglades-90342.herokuapp.com/HOOK')
-    port = int(os.getenv('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    set_webhook()
+    app.run(host='0.0.0.0', port=3000)
