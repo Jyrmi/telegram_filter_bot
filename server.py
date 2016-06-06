@@ -1,4 +1,21 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Simple Bot to reply to Telegram messages and especially photos, when it
+# replies to photos, it should return a filtered version of the photo
+# according to the the filters you have selected
+
+"""
+This Bot uses the Updater class to handle the bot.
+
+First, a few handler functions are defined. Then, those functions are passed to
+the Dispatcher and registered at their respective places.
+Then, the bot is started and runs until we press Ctrl-C on the command line.
+Usage:
+Basic Echobot example, repeats messages.
+Press Ctrl-C on the command line or send a signal to the process to stop the
+bot.
+"""
 
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
