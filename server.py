@@ -45,9 +45,9 @@ def webhook_handler():
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
 
-        text_array = text.split()
-
-        handle_command(text_array[0], update)
+        if not text:
+            text_array = text.split()
+            handle_command(text_array[0], update)
 
         try:
             change_attribute("test_subject", "test_key", text)
