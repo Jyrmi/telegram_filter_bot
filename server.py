@@ -68,11 +68,11 @@ def webhook_handler():
         elif photo:
             filter_image(bot, update)
 
-        try:
+        # try:
             # change_attribute("test_subject", "test_key", text)
-        except Exception as e:
-            print "firebase patch failed"
-            print str(e)
+        # except Exception as e:
+        #     print "firebase patch failed"
+        #     print str(e)
     return 'ok'
 
 
