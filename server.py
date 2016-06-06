@@ -96,6 +96,9 @@ def filter_image(bot, update):
         os.makedirs(chat_id)
     bot.getFile(file_id).download(chat_id+'/download.jpg')
     img = Image.open(chat_id+'/download.jpg')
+    bot.sendPhoto(update.message.chat_id,
+                  photo=open(chat_id+'/download.jpg', 'rb'),
+                  caption=('...and, here\'s your image in sepia.'))
 
 
 def echo(bot, update):
