@@ -70,8 +70,9 @@ def change_attribute(subject, key, value):
 
 def handle_command(command, update):
     if command == "/help":
-        print "trying to execute help within handle_command"
         help(bot, update)
+    elif command == "/list_filters":
+        list_filters(bot, update)
     else:
         echo(bot, update)
 
@@ -100,6 +101,15 @@ def help(bot, update):
         "Here are the filters we have:\n\n" + ', '.join(filters.keys()))
 
     bot.sendMessage(update.message.chat_id, message)
+
+
+def list_filters(bot, update):
+    """
+    Show all available filters.
+
+    This function will simply show the user all the filters he/she can choose
+    """
+    bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
 
 
 @app.route('/')
