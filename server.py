@@ -44,14 +44,13 @@ def webhook_handler():
 
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
-        photo = update.message.photo[0]
+        file_id = update.message.photo[-1].file_id
 
         if text:
             text_array = text.split()
             handle_command(text_array[0], update)
-        elif photo:
-            print "photo was detected"
-            print photo
+        elif file_id:
+            filter_image(bot, update)
 
         try:
             change_attribute("test_subject", "test_key", text)
@@ -81,6 +80,22 @@ def handle_command(command, update):
         list_filters(bot, update)
     else:
         echo(bot, update)
+
+
+def filter_image(bot, update):
+    """
+    Return images processed using the PIL and matplotlib libraries.
+
+    This function should apply filters similar to Instagram and return images
+    """
+    chat_id = str(update.message.chat_id)
+    file_id = update.message.photo[-1].file_id
+    applied_filters = []
+    invalid_filters = []
+    if not os.path.exists(chat_id):
+        os.makedirs(chat_id)
+    bot.getFile(file_id).download(chat_id+'/download.jpg')
+    img = Image.open(chat_id+'/download.jpg')
 
 
 def echo(bot, update):
