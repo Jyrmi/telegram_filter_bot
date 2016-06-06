@@ -101,6 +101,7 @@ def filter_image(bot, update):
 
     This function should apply filters similar to Instagram and return images
     """
+    print "within the filter_image function"
     chat_id = str(update.message.chat_id)
     file_id = update.message.photo[-1].file_id
     applied_filters = []
