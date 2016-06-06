@@ -37,6 +37,8 @@ def webhook_handler():
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
 
+        dp.add_handler(CommandHandler("help", help))
+
         try:
             change_attribute("test_subject", "test_key", text)
         except Exception as e:
@@ -59,6 +61,22 @@ def set_webhook():
 
 def change_attribute(subject, key, value):
     firebase.patch('/users/' + subject + '/', data={key: value})
+
+
+def help(bot, update):
+    """
+    Some helpful text with the /help command.
+
+    This function should just provide an overview of what commands to use
+    """
+    message = (
+        "Simply upload a photo (as a photo, not a file) to get started.\n"
+        "Provide the filters you want to use in the caption of your image.\n"
+        "You can string filters together and they will be applied in order,\n"
+        "e.g. \"detail smooth blur greyscale\"\n"
+        "Here are the filters we have:\n\n" + ', '.join(filters.keys()))
+
+    bot.sendMessage(update.message.chat_id, message)
 
 
 @app.route('/')
