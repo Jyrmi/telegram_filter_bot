@@ -77,9 +77,11 @@ def help(bot, update):
         "Provide the filters you want to use in the caption of your image.\n"
         "You can string filters together and they will be applied in order,\n"
         "e.g. \"detail smooth blur greyscale\"\n"
-        "Here are the filters we have:\n\n" + ', '.join(filters.keys()))
-
-    bot.sendMessage(update.message.chat_id, message)
+        "Here are the filters we have:"
+    try:
+        bot.sendMessage(update.message.chat_id, message)
+    except Exception as e:
+        print str(e)
 
 
 @app.route('/')
