@@ -19,6 +19,18 @@ app = Flask(__name__)
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
 
+filters = {
+    'blur': ImageFilter.BLUR,
+    'contour': ImageFilter.CONTOUR,
+    'detail': ImageFilter.DETAIL,
+    'edge_enhance': ImageFilter.EDGE_ENHANCE,
+    'edge_enhance_more': ImageFilter.EDGE_ENHANCE_MORE,
+    'emboss': ImageFilter.EMBOSS,
+    'find_edges': ImageFilter.FIND_EDGES,
+    'smooth': ImageFilter.SMOOTH,
+    'smooth_more': ImageFilter.SMOOTH_MORE
+}
+
 
 @app.route('/HOOK', methods=['POST'])
 def webhook_handler():
@@ -77,12 +89,9 @@ def help(bot, update):
         "Provide the filters you want to use in the caption of your image.\n"
         "You can string filters together and they will be applied in order,\n"
         "e.g. \"detail smooth blur greyscale\"\n"
-        "Here are the filters we have:"
-        )
-    try:
-        bot.sendMessage(update.message.chat_id, message)
-    except Exception as e:
-        print str(e)
+        "Here are the filters we have:\n\n" + ', '.join(filters.keys()))
+
+    bot.sendMessage(update.message.chat_id, message)
 
 
 @app.route('/')
