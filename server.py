@@ -24,8 +24,8 @@ import sendgrid
 from firebase import firebase
 
 # Firebase is used to track user state and information
-# firebase_db = os.environ['FIREBASE_DB']
-# firebase = firebase.FirebaseApplication(firebase_db, None)
+firebase_db = os.environ['FIREBASE_DB']
+firebase = firebase.FirebaseApplication(firebase_db, None)
 
 app = Flask(__name__)
 
@@ -50,26 +50,51 @@ def webhook_handler():
     if request.method == "POST":
         # retrieve the message in JSON and then transform it to Telegram object
         update = telegram.Update.de_json(request.get_json(force=True))
-
         chat_id = update.message.chat.id
 
+        current_state = None
+        try:
+            firebase_dict = firebase.get('/users/' + str(chat_id), None)
+            for k, v in firebase_dict.iteritems():
+                if k == "state":
+                    current_state = v
+            print "THIS IS THE CURRENT STATE"
+            print current_state
+        except Exception as e:
+            print "FAILURE TO ASSIGN STATE"
+            print current_state
+            print str(e)
         print update.message
+        print update.message.text.encode('utf-8')
+        print update.message.photo
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
 
         # Telegram understands UTF-8, so encode text for unicode compatibility
-        try:
-            text = update.message.text.encode('utf-8')
-            # photo = update.message.photo
-        except Exception as e:
-            print str(e)
+        text = update.message.text.encode('utf-8')
+        photo = update.message.photo
 
         if text:
-            text_array = text.split()
-            handle_command(text_array[0], update)
-        # elif photo:
-        #     filter_image(bot, update)
+            # text_array = text.split()
+            print chat_id
+            print text
+            handle_text(text, update, current_state, chat_id)
+            # handle_command(text_array[0], update)
+        elif photo:
+            try:
+                change_attribute(str(chat_id), "chat_id", str(chat_id))
+                change_attribute(str(chat_id), "state", "input_feeling")
+            except Exception as e:
+                print str(e)
+            filter_image(bot, update)
+            full_message = "How are you feeling today?"
+            bot.sendMessage(update.message.chat_id, text=full_message)
 
         # try:
-            # change_attribute("test_subject", "test_key", text)
+        #     change_attribute("test_subject", "test_key", text)
         # except Exception as e:
         #     print "firebase patch failed"
         #     print str(e)
@@ -78,15 +103,42 @@ def webhook_handler():
 
 # @app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
-    s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/HOOK')
+    s = bot.setWebhook('https://damp-castle-40734.herokuapp.com/HOOK')
     if s:
         return "webhook setup ok"
     else:
         return "webhook setup failed"
 
 
-# def change_attribute(subject, key, value):
-#     firebase.patch('/users/' + subject + '/', data={key: value})
+def change_attribute(subject, key, value):
+    firebase.patch('/users/' + subject + '/', data={key: value})
+
+
+def handle_text(text, update, current_state=None, chat_id=None):
+    if current_state == "input_feeling":
+        change_attribute(str(chat_id), "state", "input_weight")
+        change_attribute(str(chat_id), "feeling", text)
+        full_message = "What's your weight today?"
+        bot.sendMessage(update.message.chat_id, text=full_message)
+    elif current_state == "input_weight":
+        change_attribute(str(chat_id), "state", "input_memo")
+        change_attribute(str(chat_id), "weight", text)
+        full_message = "Leave some comments on your photo!"
+        bot.sendMessage(update.message.chat_id, text=full_message)
+    elif current_state == "input_memo":
+        change_attribute(str(chat_id), "state", "input_tags")
+        change_attribute(str(chat_id), "memo", text)
+        full_message = "Leave some tags on this photo!"
+        bot.sendMessage(update.message.chat_id, text=full_message)
+    elif current_state == "input_tags":
+        change_attribute(str(chat_id), "state", "complete")
+        change_attribute(str(chat_id), "tags", text.split())
+        full_message = "Great! Here is a link with all your photos."
+        bot.sendMessage(update.message.chat_id, text=full_message)
+    elif current_state == "/list_filters":
+        list_filters(bot, update)
+    else:
+        echo(bot, update)
 
 
 def handle_command(command, update):
@@ -98,50 +150,23 @@ def handle_command(command, update):
         echo(bot, update)
 
 
-# def filter_image(bot, update):
-#     """
-#     Return images processed using the PIL and matplotlib libraries.
-#
-#     This function should apply filters similar to Instagram and return images
-#     """
-#     print "---------------------"
-#     print "---------------------"
-#     print "---------------------"
-#     print "within the filter_image function"
-#     print "---------------------"
-#     print "---------------------"
-#     print "---------------------"
-#     chat_id = str(update.message.chat_id)
-#     file_id = update.message.photo[-1].file_id
-#     if not os.path.exists(chat_id):
-#         os.makedirs(chat_id)
-#     bot.getFile(file_id).download(chat_id+'/download.jpg')
-#     img = Image.open(chat_id+'/download.jpg')
-#     reply = ', '.join(filters.keys())
-#     if not update.message.caption:
-#         msg_part_1 = 'Please provide the name of the filter you would like to '
-#         msg_part_2 = 'use in the image\'s caption. Filters:\n\n'
-#         reply = msg_part_1 + msg_part_2 + reply
-#         bot.sendMessage(update.message.chat_id, text=reply)
-#         img_greyscale = img.convert('L')
-#         img_greyscale.save(chat_id+'/filtered.jpg')
-#         bot.sendPhoto(update.message.chat_id,
-#                       photo=open(chat_id+'/filtered.jpg', 'rb'),
-#                       caption=('Meanwhile, here\'s your image in greyscale.'))
-#         sepia = make_linear_ramp((255, 220, 192))
-#         img_sepia = ImageOps.autocontrast(img_greyscale)
-#         img_sepia.putpalette(sepia)
-#         img_sepia = img_sepia.convert('RGB')
-#         img_sepia.save(chat_id+'/sepia.jpg')
-#         bot.sendPhoto(update.message.chat_id,
-#                       photo=open(chat_id+'/sepia.jpg', 'rb'),
-#                       caption=('...and, here\'s your image in sepia.'))
-#         img_inv = ImageOps.invert(img)
-#         img_inv.save(chat_id+'/inverted.jpg')
-#         bot.sendPhoto(update.message.chat_id,
-#                       photo=open(chat_id+'/inverted.jpg', 'rb'),
-#                       caption=('...and, here\'s your image inverted.'))
-#         return
+def filter_image(bot, update):
+    """
+    Return images processed using the PIL and matplotlib libraries.
+
+    This function should apply filters similar to Instagram and return images
+    """
+    chat_id = str(update.message.chat_id)
+    file_id = update.message.photo[-1].file_id
+    change_attribute(str(chat_id), "file_id", file_id)
+    if not os.path.exists(chat_id):
+        os.makedirs(chat_id)
+    bot.getFile(file_id).download(chat_id+'/download.jpg')
+
+    bot.sendPhoto(update.message.chat_id,
+                  photo=open(chat_id+'/download.jpg', 'rb'),
+                  caption=('...and, here\'s your image inverted.'))
+    return
 
 
 def echo(bot, update):
@@ -151,46 +176,6 @@ def echo(bot, update):
     This function only serves the purpose of making sure the bot is activated
     """
     bot.sendMessage(update.message.chat_id, text=update.message.text)
-
-
-def help(bot, update):
-    """
-    Some helpful text with the /help command.
-
-    This function should just provide an overview of what commands to use
-    """
-    print "attempting to execute help function"
-    message = (
-        "Simply upload a photo (as a photo, not a file) to get started.\n"
-        "Provide the filters you want to use in the caption of your image.\n"
-        "You can string filters together and they will be applied in order,\n"
-        "e.g. \"detail smooth blur greyscale\"\n"
-        "Here are the filters we have:\n\n" + ', '.join(filters.keys()))
-
-    bot.sendMessage(update.message.chat_id, message)
-
-
-def list_filters(bot, update):
-    """
-    Show all available filters.
-
-    This function will simply show the user all the filters he/she can choose
-    """
-    bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
-
-
-def make_linear_ramp(white):
-    """
-    Create a general color mask, used for the sepia filter for example.
-
-    This function will simply return a color mask to be used on any filter
-    """
-    # putpalette expects [r,g,b,r,g,b,...]
-    ramp = []
-    r, g, b = white
-    for i in range(255):
-        ramp.extend((r*i/255, g*i/255, b*i/255))
-    return ramp
 
 
 @app.route('/')
