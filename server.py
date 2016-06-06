@@ -52,9 +52,6 @@ def webhook_handler():
         except Exception as e:
             print "firebase patch failed"
             print str(e)
-        # repeat the same message back (echo)
-        bot.sendMessage(chat_id=chat_id, text=text)
-
     return 'ok'
 
 
@@ -75,6 +72,17 @@ def handle_command(command, update):
     if command == "/help":
         print "trying to execute help within handle_command"
         help(bot, update)
+    else:
+        echo(bot, update)
+
+
+def echo(bot, update):
+    """
+    Repeat any text message as this bot's default behavior.
+
+    This function only serves the purpose of making sure the bot is activated
+    """
+    bot.sendMessage(update.message.chat_id, text=update.message.text)
 
 
 def help(bot, update):
