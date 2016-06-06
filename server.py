@@ -58,15 +58,15 @@ def webhook_handler():
         # Telegram understands UTF-8, so encode text for unicode compatibility
         try:
             text = update.message.text.encode('utf-8')
-            photo = update.message.photo
+            # photo = update.message.photo
         except Exception as e:
             print str(e)
 
         if text:
             text_array = text.split()
             handle_command(text_array[0], update)
-        elif photo:
-            filter_image(bot, update)
+        # elif photo:
+        #     filter_image(bot, update)
 
         # try:
             # change_attribute("test_subject", "test_key", text)
@@ -98,64 +98,50 @@ def handle_command(command, update):
         echo(bot, update)
 
 
-def filter_image(bot, update):
-    """
-    Return images processed using the PIL and matplotlib libraries.
-
-    This function should apply filters similar to Instagram and return images
-    """
-    print "---------------------"
-    print "---------------------"
-    print "---------------------"
-    print "within the filter_image function"
-    print "---------------------"
-    print "---------------------"
-    print "---------------------"
-    chat_id = str(update.message.chat_id)
-    file_id = update.message.photo[-1].file_id
-    applied_filters = []
-    invalid_filters = []
-    if not os.path.exists(chat_id):
-        os.makedirs(chat_id)
-    bot.getFile(file_id).download(chat_id+'/download.jpg')
-    img = Image.open(chat_id+'/download.jpg')
-    # No filter provided. Use a default filter.
-    reply = ', '.join(filters.keys())
-    if not update.message.caption:
-        msg_part_1 = 'Please provide the name of the filter you would like to '
-        msg_part_2 = 'use in the image\'s caption. Filters:\n\n'
-        reply = msg_part_1 + msg_part_2 + reply
-
-        # Notify the user of invalid input
-        bot.sendMessage(update.message.chat_id, text=reply)
-
-        # Send sample filtered images in this scenario
-        img_greyscale = img.convert('L')
-        img_greyscale.save(chat_id+'/filtered.jpg')
-        bot.sendPhoto(update.message.chat_id,
-                      photo=open(chat_id+'/filtered.jpg', 'rb'),
-                      caption=('Meanwhile, here\'s your image in greyscale.'))
-
-        # make sepia ramp (tweak color as necessary)
-        sepia = make_linear_ramp((255, 220, 192))
-        # optional: apply contrast enhancement here, e.g.
-        img_sepia = ImageOps.autocontrast(img_greyscale)
-        # apply sepia palette
-        img_sepia.putpalette(sepia)
-        # convert back to RGB so we can save it as JPEG
-        # (alternatively, save it in PNG or similar)
-        img_sepia = img_sepia.convert('RGB')
-        img_sepia.save(chat_id+'/sepia.jpg')
-        bot.sendPhoto(update.message.chat_id,
-                      photo=open(chat_id+'/sepia.jpg', 'rb'),
-                      caption=('...and, here\'s your image in sepia.'))
-        img_inv = ImageOps.invert(img)
-        img_inv.save(chat_id+'/inverted.jpg')
-        bot.sendPhoto(update.message.chat_id,
-                      photo=open(chat_id+'/inverted.jpg', 'rb'),
-                      caption=('...and, here\'s your image inverted.'))
-
-        return
+# def filter_image(bot, update):
+#     """
+#     Return images processed using the PIL and matplotlib libraries.
+#
+#     This function should apply filters similar to Instagram and return images
+#     """
+#     print "---------------------"
+#     print "---------------------"
+#     print "---------------------"
+#     print "within the filter_image function"
+#     print "---------------------"
+#     print "---------------------"
+#     print "---------------------"
+#     chat_id = str(update.message.chat_id)
+#     file_id = update.message.photo[-1].file_id
+#     if not os.path.exists(chat_id):
+#         os.makedirs(chat_id)
+#     bot.getFile(file_id).download(chat_id+'/download.jpg')
+#     img = Image.open(chat_id+'/download.jpg')
+#     reply = ', '.join(filters.keys())
+#     if not update.message.caption:
+#         msg_part_1 = 'Please provide the name of the filter you would like to '
+#         msg_part_2 = 'use in the image\'s caption. Filters:\n\n'
+#         reply = msg_part_1 + msg_part_2 + reply
+#         bot.sendMessage(update.message.chat_id, text=reply)
+#         img_greyscale = img.convert('L')
+#         img_greyscale.save(chat_id+'/filtered.jpg')
+#         bot.sendPhoto(update.message.chat_id,
+#                       photo=open(chat_id+'/filtered.jpg', 'rb'),
+#                       caption=('Meanwhile, here\'s your image in greyscale.'))
+#         sepia = make_linear_ramp((255, 220, 192))
+#         img_sepia = ImageOps.autocontrast(img_greyscale)
+#         img_sepia.putpalette(sepia)
+#         img_sepia = img_sepia.convert('RGB')
+#         img_sepia.save(chat_id+'/sepia.jpg')
+#         bot.sendPhoto(update.message.chat_id,
+#                       photo=open(chat_id+'/sepia.jpg', 'rb'),
+#                       caption=('...and, here\'s your image in sepia.'))
+#         img_inv = ImageOps.invert(img)
+#         img_inv.save(chat_id+'/inverted.jpg')
+#         bot.sendPhoto(update.message.chat_id,
+#                       photo=open(chat_id+'/inverted.jpg', 'rb'),
+#                       caption=('...and, here\'s your image inverted.'))
+#         return
 
 
 def echo(bot, update):
