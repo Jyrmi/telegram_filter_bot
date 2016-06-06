@@ -18,6 +18,12 @@ app = Flask(__name__)
 
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
+# Create the EventHandler and pass it your bot's token.
+global updater
+updater = Updater(os.environ['TELEGRAM_KEY'])
+# Get the dispatcher to register handlers
+global dp
+dp = updater.dispatcher
 
 
 @app.route('/HOOK', methods=['POST'])
@@ -30,6 +36,7 @@ def webhook_handler():
 
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
+
         try:
             change_attribute("test_subject", "test_key", text)
         except Exception as e:
