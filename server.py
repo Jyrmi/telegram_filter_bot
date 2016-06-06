@@ -58,14 +58,14 @@ def webhook_handler():
         # Telegram understands UTF-8, so encode text for unicode compatibility
         try:
             text = update.message.text.encode('utf-8')
-            file_id = update.message.photo[-1].file_id
+            photo = update.message.photo
         except Exception as e:
             print str(e)
 
         if text:
             text_array = text.split()
             handle_command(text_array[0], update)
-        elif file_id:
+        elif photo:
             filter_image(bot, update)
 
         try:
