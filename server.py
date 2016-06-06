@@ -24,8 +24,8 @@ import sendgrid
 from firebase import firebase
 
 # Firebase is used to track user state and information
-firebase_db = os.environ['FIREBASE_DB']
-firebase = firebase.FirebaseApplication(firebase_db, None)
+# firebase_db = os.environ['FIREBASE_DB']
+# firebase = firebase.FirebaseApplication(firebase_db, None)
 
 app = Flask(__name__)
 
@@ -69,7 +69,7 @@ def webhook_handler():
             filter_image(bot, update)
 
         try:
-            change_attribute("test_subject", "test_key", text)
+            # change_attribute("test_subject", "test_key", text)
         except Exception as e:
             print "firebase patch failed"
             print str(e)
@@ -85,8 +85,8 @@ def set_webhook():
         return "webhook setup failed"
 
 
-def change_attribute(subject, key, value):
-    firebase.patch('/users/' + subject + '/', data={key: value})
+# def change_attribute(subject, key, value):
+#     firebase.patch('/users/' + subject + '/', data={key: value})
 
 
 def handle_command(command, update):
