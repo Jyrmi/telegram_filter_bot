@@ -40,6 +40,8 @@ def webhook_handler():
 
         chat_id = update.message.chat.id
 
+        print update.message
+
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
 
@@ -110,6 +112,20 @@ def list_filters(bot, update):
     This function will simply show the user all the filters he/she can choose
     """
     bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
+
+
+def make_linear_ramp(white):
+    """
+    Create a general color mask, used for the sepia filter for example.
+
+    This function will simply return a color mask to be used on any filter
+    """
+    # putpalette expects [r,g,b,r,g,b,...]
+    ramp = []
+    r, g, b = white
+    for i in range(255):
+        ramp.extend((r*i/255, g*i/255, b*i/255))
+    return ramp
 
 
 @app.route('/')
