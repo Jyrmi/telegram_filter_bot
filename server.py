@@ -6,15 +6,11 @@
 # according to the the filters you have selected
 
 """
-This Bot uses the Updater class to handle the bot.
+This Bot uses simple conditional responses to webhook messages.
 
-First, a few handler functions are defined. Then, those functions are passed to
-the Dispatcher and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-Usage:
-Basic Echobot example, repeats messages.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
+Using a simple chain of if/else statements, we have built basic logic into
+the bot to handle different commands. This bot runs on a flask server so
+unless Heroku dies, it shall not.
 """
 
 import telegram
