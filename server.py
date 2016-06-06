@@ -76,7 +76,7 @@ def webhook_handler():
     return 'ok'
 
 
-# @app.route('/set_webhook', methods=['GET', 'POST'])
+@app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
     s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/HOOK')
     if s:
