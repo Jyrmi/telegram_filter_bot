@@ -61,6 +61,7 @@ def change_attribute(subject, key, value):
 
 def handle_command(command, update):
     if command == "/help":
+        print "trying to execute help within handle_command"
         help(bot, update)
 
 
@@ -70,6 +71,7 @@ def help(bot, update):
 
     This function should just provide an overview of what commands to use
     """
+    print "attempting to execute help function"
     message = (
         "Simply upload a photo (as a photo, not a file) to get started.\n"
         "Provide the filters you want to use in the caption of your image.\n"
