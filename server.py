@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import ForceReply, ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask, request
 import os
 from PIL import Image, ImageFilter, ImageOps
