@@ -18,12 +18,6 @@ app = Flask(__name__)
 
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
-# Create the EventHandler and pass it your bot's token.
-global updater
-updater = Updater(os.environ['TELEGRAM_KEY'])
-# Get the dispatcher to register handlers
-global dp
-dp = updater.dispatcher
 
 
 @app.route('/HOOK', methods=['POST'])
@@ -37,7 +31,9 @@ def webhook_handler():
         # Telegram understands UTF-8, so encode text for unicode compatibility
         text = update.message.text.encode('utf-8')
 
-        dp.add_handler(CommandHandler("help", help))
+        text_array = text.split()
+
+        handle_command(text_array[0], update)
 
         try:
             change_attribute("test_subject", "test_key", text)
@@ -61,6 +57,11 @@ def set_webhook():
 
 def change_attribute(subject, key, value):
     firebase.patch('/users/' + subject + '/', data={key: value})
+
+
+def handle_command(command, update):
+    if command == "/help":
+        help(bot, update)
 
 
 def help(bot, update):
