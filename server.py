@@ -115,7 +115,12 @@ def change_attribute(subject, key, value):
 
 
 def handle_text(text, update, current_state=None, chat_id=None):
-    if current_state == "input_feeling":
+    text = update.message.text.encode('utf-8')
+    if text == '/help':
+        help(bot, update)
+    elif text == '/list_filters':
+        list_filters(bot, update)
+    elif current_state == "input_feeling":
         change_attribute(str(chat_id), "state", "input_weight")
         change_attribute(str(chat_id), "feeling", text)
         full_message = "What's your weight today?"
@@ -141,13 +146,13 @@ def handle_text(text, update, current_state=None, chat_id=None):
         echo(bot, update)
 
 
-def handle_command(command, update):
-    if command == "/help":
-        help(bot, update)
-    elif command == "/list_filters":
-        list_filters(bot, update)
-    else:
-        echo(bot, update)
+# def handle_command(command, update):
+#     if command == "/help":
+#         help(bot, update)
+#     elif command == "/list_filters":
+#         list_filters(bot, update)
+#     else:
+#         echo(bot, update)
 
 
 def filter_image(bot, update):

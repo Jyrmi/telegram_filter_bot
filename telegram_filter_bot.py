@@ -371,14 +371,6 @@ def get_email(bot, update):
             bot.sendMessage(chat_id, text="Okay, no email was sent.")
 
 
-# def set_webhook(bot):
-#     s = bot.setWebhook('https://shrouded-everglades-90342.herokuapp.com/HOOK')
-#     if s:
-#         return "webhook setup ok"
-#     else:
-#         return "webhook setup failed"
-
-
 def main():
     """
     Execute all commands in this function (the brains of the bot).
