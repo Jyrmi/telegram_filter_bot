@@ -101,19 +101,6 @@ def webhook_handler():
     return 'ok'
 
 
-# @app.route('/set_webhook', methods=['GET', 'POST'])
-def set_webhook():
-    s = bot.setWebhook('https://pacific-dusk-98067.herokuapp.com/HOOK')
-    if s:
-        return "webhook setup ok"
-    else:
-        return "webhook setup failed"
-
-
-def change_attribute(subject, key, value):
-    firebase.patch('/users/' + subject + '/', data={key: value})
-
-
 def handle_text(text, update, current_state=None, chat_id=None):
     text = update.message.text.encode('utf-8')
     if text == '/help':
@@ -146,15 +133,6 @@ def handle_text(text, update, current_state=None, chat_id=None):
         echo(bot, update)
 
 
-# def handle_command(command, update):
-#     if command == "/help":
-#         help(bot, update)
-#     elif command == "/list_filters":
-#         list_filters(bot, update)
-#     else:
-#         echo(bot, update)
-
-
 def filter_image(bot, update):
     """
     Return images processed using the PIL and matplotlib libraries.
@@ -174,6 +152,19 @@ def filter_image(bot, update):
     return
 
 
+def change_attribute(subject, key, value):
+    firebase.patch('/users/' + subject + '/', data={key: value})
+
+
+def list_filters(bot, update):
+    """
+    Show all available filters.
+
+    This function will simply show the user all the filters he/she can choose
+    """
+    bot.sendMessage(update.message.chat_id, text=', '.join(filters.keys()))
+
+
 def echo(bot, update):
     """
     Repeat any text message as this bot's default behavior.
@@ -186,6 +177,16 @@ def echo(bot, update):
 @app.route('/')
 def index():
     return '.'
+
+
+# @app.route('/set_webhook', methods=['GET', 'POST'])
+def set_webhook():
+    s = bot.setWebhook('https://pacific-dusk-98067.herokuapp.com/HOOK')
+    if s:
+        return "webhook setup ok"
+    else:
+        return "webhook setup failed"
+
 
 if __name__ == "__main__":
     set_webhook()
