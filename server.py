@@ -103,7 +103,9 @@ def webhook_handler():
 
 def handle_text(text, update, current_state=None, chat_id=None):
     text = update.message.text.encode('utf-8')
-    if text == '/help':
+    if text == '/start':
+        start(bot, update)
+    elif text == '/help':
         help(bot, update)
     elif text == '/list_filters':
         list_filters(bot, update)
