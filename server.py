@@ -95,14 +95,14 @@ def webhook_handler():
             handle_text(text, update, current_state, chat_id)
             # handle_command(text_array[0], update)
         elif photo:
-            try:
-                change_attribute(str(chat_id), "chat_id", str(chat_id))
-                change_attribute(str(chat_id), "state", "input_feeling")
-            except Exception as e:
-                print str(e)
+            # try:
+            #     change_attribute(str(chat_id), "chat_id", str(chat_id))
+            #     change_attribute(str(chat_id), "state", "input_feeling")
+            # except Exception as e:
+            #     print str(e)
             filter_image(bot, update)
-            full_message = "How are you feeling today?"
-            bot.sendMessage(update.message.chat_id, text=full_message)
+            # full_message = "How are you feeling today?"
+            # bot.sendMessage(update.message.chat_id, text=full_message)
 
         # try:
         #     change_attribute("test_subject", "test_key", text)
