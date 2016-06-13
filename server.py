@@ -97,7 +97,7 @@ def webhook_handler():
         elif photo:
             try:
                 change_attribute(str(chat_id), "chat_id", str(chat_id))
-                change_attribute(str(chat_id), "state", "input_feeling")
+                # change_attribute(str(chat_id), "state", "input_feeling")
                 change_attribute(str(chat_id), "state", "MENU")
             except Exception as e:
                 print str(e)
@@ -145,7 +145,7 @@ def handle_text(text, update, current_state=None, chat_id=None):
     #     bot.sendMessage(update.message.chat_id, text=full_message)
     # elif current_state == "/list_filters":
     #     list_filters(bot, update)
-    else:
+    elif text == '/email':
         # echo(bot, update)
         get_email(bot, update)
 
@@ -373,7 +373,7 @@ def get_email(bot, update):
 
     # Since the handler will also be called on messages, we need to check if
     # the message is actually a command
-    if chat_state == MENU and 'email' in text:
+    if chat_state == MENU:
         # state[chat_id] = AWAIT_EMAIL_INPUT # set the state
         try:
             change_attribute(str(chat_id), "state", AWAIT_EMAIL_INPUT)
