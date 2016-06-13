@@ -27,16 +27,21 @@ from firebase import firebase
 firebase_db = os.environ['FIREBASE_DB']
 firebase = firebase.FirebaseApplication(firebase_db, None)
 
+sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
+
 app = Flask(__name__)
 
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
 
-img_count = 0
+# Define the different states a chat can be in
+MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION = range(3)
+AWAIT_EMAIL_INPUT, AWAIT_EMAIL_CONFIRMATION = range(3, 5)
 
-def incr_img_count():
-    img_count += 1
-    return img_count
+# Define the filter names here
+FILTER_1, FILTER_2, FILTER_3 = ("FILTER_1", "FILTER_2", "FILTER_3")
+YES, NO = ("YES", "NO")
+
 
 filters = {
     'blur': ImageFilter.BLUR,
@@ -115,6 +120,8 @@ def handle_text(text, update, current_state=None, chat_id=None):
         help(bot, update)
     elif text == '/filters':
         list_filters(bot, update)
+    elif text == '/cancel':
+        cancel(bot, update)
     elif current_state == "input_feeling":
         change_attribute(str(chat_id), "state", "input_weight")
         change_attribute(str(chat_id), "feeling", text)
@@ -222,6 +229,209 @@ def make_linear_ramp(white):
     for i in range(255):
         ramp.extend((r*i/255, g*i/255, b*i/255))
     return ramp
+
+
+def cancel(bot, update):
+    """
+    Cancel out this user's state, whatever the current operation.
+
+    This function will clear out the state and context key-value pairs for this
+    user
+    """
+    chat_id = update.message.chat_id
+    # del state[chat_id]
+    # del context[chat_id]
+    try:
+        change_attribute(str(chat_id), "state", "-1")
+        change_attribute(str(chat_id), "context", "-1")
+    except Exception as e:
+        print str(e)
+
+def set_value(bot, update):
+    chat_id = update.message.chat_id
+    user_id = update.message.from_user.id
+    text = update.message.text
+    # chat_state = state.get(chat_id, MENU)
+    chat_state = None
+    try:
+        chat_state = firebase.get('/users/' + str(chat_id) + '/state', None)
+    except Exception as e:
+        print str(e)
+
+    # chat_context = context.get(chat_id, None)
+    chat_context = None
+    try:
+        chat_context = firebase.get('/users/' + str(chat_id) + '/context', None)
+    except Exception as e:
+        print str(e)
+
+    # Since the handler will also be called on messages, we need to check if
+    # the message is actually a command
+    if chat_state == MENU and 'test' in text:
+        # state[chat_id] = AWAIT_FILTER_INPUT # set the state
+        try:
+            change_attribute(str(chat_id), "state", AWAIT_FILTER_INPUT)
+        except Exception as e:
+            print str(e)
+
+        # context[chat_id] = user_id  # save the user id to context
+        try:
+            change_attribute(str(chat_id), "context", str(chat_id))
+        except Exception as e:
+            print str(e)
+        bot.sendMessage(chat_id,
+                        text="Hi there, what filter(s) would you like to apply?\n"
+                        "type /cancel to end this conversation",
+                        reply_markup=ForceReply())
+    # If we are waiting for input and the right user answered
+    # MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION
+    elif chat_state == AWAIT_FILTER_INPUT and chat_context == user_id:
+        # state[chat_id] = AWAIT_FILTER_CONFIRMATION
+        try:
+            change_attribute(str(chat_id), "state", AWAIT_FILTER_CONFIRMATION)
+        except Exception as e:
+            print str(e)
+        # Save the user id and the answer to context
+        # context[chat_id] = (user_id, update.message.text)
+        try:
+            change_attribute(str(chat_id), "context", {str(chat_id): update.message.text})
+        except Exception as e:
+            print str(e)
+        reply_markup = ReplyKeyboardMarkup(
+            [[KeyboardButton(FILTER_1), KeyboardButton(FILTER_2), KeyboardButton(FILTER_3)]],
+            one_time_keyboard=True)
+        bot.sendMessage(chat_id,
+                        text="Okay, just to confirm, you would like the following filters: " + text + ", is that correct?",
+                        reply_markup=reply_markup)
+    # If we are waiting for confirmation and the right user answered
+    elif chat_state == AWAIT_FILTER_CONFIRMATION and chat_context[0] == user_id:
+        # del state[chat_id]
+        # del context[chat_id]
+        cancel(bot, update)
+        try:
+            change_attribute(str(chat_id), "value", chat_context[1])
+        except Exception as e:
+            print str(e)
+
+        if text == FILTER_1:
+            # values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="FILTER_1 has been selected.")
+        elif text == FILTER_2:
+            # values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="FILTER_2 has been selected.")
+        elif text == FILTER_3:
+            # values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="FILTER_3 has been selected.")
+
+
+def use_sendgrid(bot, update, email_address):
+    chat_id = str(update.message.chat_id)
+    html_message = '<b>Enjoy!</b>'
+    message = sendgrid.Mail()
+    message.add_to(email_address)
+    message.set_subject('your filtered photos')
+    message.set_html(html_message)
+    # message.set_text('Body')
+    message.set_from('telegram_filter_bot')
+    message.add_attachment('filtered.jpg', open(chat_id+'/filtered.jpg', 'rb'))
+    # message.add_attachment('filtered.jpg', open(chat_id+'/filtered.jpg', 'rb'))
+    # message.add_attachment('sepia.jpg', open(chat_id+'/sepia.jpg', 'rb'))
+    # message.add_attachment('inverted.jpg', open(chat_id+'/inverted.jpg', 'rb'))
+    status, msg = sg.send(message)
+    print(status, msg)
+    if status == 200:
+        success_msg = "<b>Your photos have been emailed successfully!</b>\n"
+        bot.sendMessage(update.message.chat_id,
+                        text=success_msg,
+                        parse_mode="HTML")
+    else:
+        fail_msg = "<b>There was a problem emailing your photos...</b>\n"
+        bot.sendMessage(update.message.chat_id,
+                        text=fail_msg,
+                        parse_mode="HTML")
+
+
+def get_email(bot, update):
+    chat_id = update.message.chat_id
+    user_id = update.message.from_user.id
+    text = update.message.text
+    # chat_state = state.get(chat_id, MENU)
+    chat_state = None
+    try:
+        chat_state = firebase.get('/users/' + str(chat_id) + '/state', None)
+    except Exception as e:
+        print str(e)
+
+    # chat_context = context.get(chat_id, None)
+    chat_context = None
+    try:
+        chat_context = firebase.get('/users/' + str(chat_id) + '/context', None)
+    except Exception as e:
+        print str(e)
+
+    # Since the handler will also be called on messages, we need to check if
+    # the message is actually a command
+    if chat_state == MENU and 'email' in text:
+        # state[chat_id] = AWAIT_EMAIL_INPUT # set the state
+        try:
+            change_attribute(str(chat_id), "state", AWAIT_EMAIL_INPUT)
+        except Exception as e:
+            print str(e)
+
+        # context[chat_id] = user_id  # save the user id to context
+        try:
+            change_attribute(str(chat_id), "context", str(chat_id))
+        except Exception as e:
+            print str(e)
+        bot.sendMessage(chat_id,
+                        text="Hi there, please input your email!\n"
+                        "type /cancel to end this conversation",
+                        reply_markup=ForceReply())
+    # If we are waiting for input and the right user answered
+    # MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION
+    elif chat_state == AWAIT_EMAIL_INPUT and chat_context == user_id:
+        # state[chat_id] = AWAIT_EMAIL_CONFIRMATION
+        try:
+            change_attribute(str(chat_id), "state", AWAIT_EMAIL_CONFIRMATION)
+        except Exception as e:
+            print str(e)
+        # Save the user id and the answer to context
+        # context[chat_id] = (user_id, update.message.text)
+        try:
+            change_attribute(str(chat_id), "context", {str(chat_id): update.message.text})
+        except Exception as e:
+            print str(e)
+        reply_markup = ReplyKeyboardMarkup(
+            [[KeyboardButton(YES), KeyboardButton(NO)]],
+            one_time_keyboard=True)
+        bot.sendMessage(chat_id,
+                        text="Okay, just to confirm, I'm sending your photos to: " + text + ", is that correct?",
+                        reply_markup=reply_markup)
+    # If we are waiting for confirmation and the right user answered
+    elif chat_state == AWAIT_EMAIL_CONFIRMATION and chat_context[0] == user_id:
+        # del state[chat_id]
+        # del context[chat_id]
+        cancel(bot, update)
+        try:
+            change_attribute(str(chat_id), "value", chat_context[1])
+        except Exception as e:
+            print str(e)
+
+        value = None
+        try:
+            value = firebase.get('/users/' + str(chat_id) + '/value', None)
+        except Exception as e:
+            print str(e)
+
+        if text == YES:
+            # values[chat_id] = chat_context[1]
+            # use_sendgrid(bot, update, values[chat_id])
+            if value:
+                use_sendgrid(bot, update, value)
+                bot.sendMessage(chat_id, text="An email has been sent to " + values[chat_id])
+        else:
+            # values[chat_id] = chat_context[1]
+            bot.sendMessage(chat_id, text="Okay, no email was sent.")
 
 
 def change_attribute(subject, key, value):
