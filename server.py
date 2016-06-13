@@ -32,6 +32,12 @@ app = Flask(__name__)
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
 
+img_count = 0
+
+def incr_img_count():
+    img_count += 1
+    return img_count
+
 filters = {
     'blur': ImageFilter.BLUR,
     'contour': ImageFilter.CONTOUR,
@@ -107,7 +113,7 @@ def handle_text(text, update, current_state=None, chat_id=None):
         start(bot, update)
     elif text == '/help':
         help(bot, update)
-    elif text == '/list_filters':
+    elif text == '/filters':
         list_filters(bot, update)
     elif current_state == "input_feeling":
         change_attribute(str(chat_id), "state", "input_weight")
@@ -141,17 +147,81 @@ def filter_image(bot, update):
 
     This function should apply filters similar to Instagram and return images
     """
+
+    # Get the largest of the three images created by Telegram
     chat_id = str(update.message.chat_id)
     file_id = update.message.photo[-1].file_id
-    change_attribute(str(chat_id), "file_id", file_id)
+    applied_filters = []
+    invalid_filters = []
+
     if not os.path.exists(chat_id):
         os.makedirs(chat_id)
-    bot.getFile(file_id).download(chat_id+'/download.jpg')
 
-    bot.sendPhoto(update.message.chat_id,
-                  photo=open(chat_id+'/download.jpg', 'rb'),
-                  caption=('...and, here\'s your image inverted.'))
-    return
+    bot.getFile(file_id).download(chat_id+'/download.jpg')
+    img = Image.open(chat_id+'/download.jpg')
+
+    # No filter provided. Use a default filter.
+    reply = ', '.join(filters.keys())
+
+    caption = update.message.caption.lower().replace(',', '').split(' ')
+    for f in caption:
+
+        # Image.convert can easily turn an image into greyscale
+        if 'greyscale' in f:
+            img = img.convert('L')
+            applied_filters.append(f)
+
+        # Apply a sepia-tone filter
+        elif 'sepia' in f:
+            img = img.convert('L')
+            # make sepia ramp (tweak color as necessary)
+            sepia = make_linear_ramp((255, 220, 192))
+            # optional: apply contrast enhancement here, e.g.
+            img = ImageOps.autocontrast(img)
+            # apply sepia palette
+            img.putpalette(sepia)
+            img = img.convert("RGB")
+            applied_filters.append('sepia-tone')
+
+        elif 'invert' in f:
+            img = ImageOps.invert(img)
+            applied_filters.append('inverted')
+
+        # The specified filter is one of the ImageFilter module ones
+        elif f in filters:
+            img = img.filter(filters[f])
+            applied_filters.append(f)
+
+        # The filter isn't supported
+        else:
+            invalid_filters.append(f)
+
+    # Notify the user of unsupported filters
+    if invalid_filters:
+        reply = ('Sorry, we don\'t have the %s filter(s). Filters:\n\n' %
+                 ', '.join(invalid_filters) + reply)
+
+        bot.sendMessage(update.message.chat_id, text=reply)
+
+    img.save(chat_id+'/filtered.jpg')
+    if applied_filters:
+        bot.sendPhoto(update.message.chat_id,
+                      photo=open(chat_id+'/filtered.jpg', 'rb'),
+                      caption=' '.join(applied_filters))
+
+
+def make_linear_ramp(white):
+    """
+    Create a general color mask, used for the sepia filter for example.
+
+    This function will simply return a color mask to be used on any filter
+    """
+    # putpalette expects [r,g,b,r,g,b,...]
+    ramp = []
+    r, g, b = white
+    for i in range(255):
+        ramp.extend((r*i/255, g*i/255, b*i/255))
+    return ramp
 
 
 def change_attribute(subject, key, value):
