@@ -95,11 +95,12 @@ def webhook_handler():
             handle_text(text, update, current_state, chat_id)
             # handle_command(text_array[0], update)
         elif photo:
-            # try:
-            #     change_attribute(str(chat_id), "chat_id", str(chat_id))
-            #     change_attribute(str(chat_id), "state", "input_feeling")
-            # except Exception as e:
-            #     print str(e)
+            try:
+                change_attribute(str(chat_id), "chat_id", str(chat_id))
+                change_attribute(str(chat_id), "state", "input_feeling")
+                change_attribute(str(chat_id), "state", "MENU")
+            except Exception as e:
+                print str(e)
             filter_image(bot, update)
             # full_message = "How are you feeling today?"
             # bot.sendMessage(update.message.chat_id, text=full_message)
@@ -429,7 +430,7 @@ def get_email(bot, update):
             # use_sendgrid(bot, update, values[chat_id])
             if value:
                 use_sendgrid(bot, update, value)
-                bot.sendMessage(chat_id, text="An email has been sent to " + values[chat_id])
+                bot.sendMessage(chat_id, text="An email has been sent to " + value)
         else:
             # values[chat_id] = chat_context[1]
             bot.sendMessage(chat_id, text="Okay, no email was sent.")
