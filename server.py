@@ -122,30 +122,31 @@ def handle_text(text, update, current_state=None, chat_id=None):
         list_filters(bot, update)
     elif text == '/cancel':
         cancel(bot, update)
-    elif current_state == "input_feeling":
-        change_attribute(str(chat_id), "state", "input_weight")
-        change_attribute(str(chat_id), "feeling", text)
-        full_message = "What's your weight today?"
-        bot.sendMessage(update.message.chat_id, text=full_message)
-    elif current_state == "input_weight":
-        change_attribute(str(chat_id), "state", "input_memo")
-        change_attribute(str(chat_id), "weight", text)
-        full_message = "Leave some comments on your photo!"
-        bot.sendMessage(update.message.chat_id, text=full_message)
-    elif current_state == "input_memo":
-        change_attribute(str(chat_id), "state", "input_tags")
-        change_attribute(str(chat_id), "memo", text)
-        full_message = "Leave some tags on this photo!"
-        bot.sendMessage(update.message.chat_id, text=full_message)
-    elif current_state == "input_tags":
-        change_attribute(str(chat_id), "state", "complete")
-        change_attribute(str(chat_id), "tags", text.split())
-        full_message = "Great! Here is a link with all your photos."
-        bot.sendMessage(update.message.chat_id, text=full_message)
-    elif current_state == "/list_filters":
-        list_filters(bot, update)
+    # elif current_state == "input_feeling":
+    #     change_attribute(str(chat_id), "state", "input_weight")
+    #     change_attribute(str(chat_id), "feeling", text)
+    #     full_message = "What's your weight today?"
+    #     bot.sendMessage(update.message.chat_id, text=full_message)
+    # elif current_state == "input_weight":
+    #     change_attribute(str(chat_id), "state", "input_memo")
+    #     change_attribute(str(chat_id), "weight", text)
+    #     full_message = "Leave some comments on your photo!"
+    #     bot.sendMessage(update.message.chat_id, text=full_message)
+    # elif current_state == "input_memo":
+    #     change_attribute(str(chat_id), "state", "input_tags")
+    #     change_attribute(str(chat_id), "memo", text)
+    #     full_message = "Leave some tags on this photo!"
+    #     bot.sendMessage(update.message.chat_id, text=full_message)
+    # elif current_state == "input_tags":
+    #     change_attribute(str(chat_id), "state", "complete")
+    #     change_attribute(str(chat_id), "tags", text.split())
+    #     full_message = "Great! Here is a link with all your photos."
+    #     bot.sendMessage(update.message.chat_id, text=full_message)
+    # elif current_state == "/list_filters":
+    #     list_filters(bot, update)
     else:
-        echo(bot, update)
+        # echo(bot, update)
+        get_email(bot, update)
 
 
 def filter_image(bot, update):
