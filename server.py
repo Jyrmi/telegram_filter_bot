@@ -176,7 +176,7 @@ def filter_image(bot, update):
     # Notify the user of unsupported filters
     if invalid_filters:
         reply = ('Sorry, we don\'t have the %s filter(s). Filters:\n\n' %
-                 ', '.join(invalid_filters) + reply)
+                 ', '.join(invalid_filters) + str(reply))
 
         bot.sendMessage(update.message.chat_id, text=reply)
 
@@ -249,7 +249,7 @@ def set_value(bot, update):
             [[KeyboardButton(FILTER_1), KeyboardButton(FILTER_2), KeyboardButton(FILTER_3)]],
             one_time_keyboard=True)
         bot.sendMessage(chat_id,
-                        text="Okay, just to confirm, you would like the following filters: " + text + ", is that correct?",
+                        text="Okay, just to confirm, you would like the following filters: " + str(text) + ", is that correct?",
                         reply_markup=reply_markup)
     # If we are waiting for confirmation and the right user answered
     elif chat_state == AWAIT_FILTER_CONFIRMATION and chat_context[0] == user_id:
@@ -330,7 +330,7 @@ def get_email(bot, update):
             [[KeyboardButton(YES), KeyboardButton(NO)]],
             one_time_keyboard=True)
         bot.sendMessage(chat_id,
-                        text="Okay, just to confirm, I'm sending your photos to: " + text + ", is that correct?",
+                        text="Okay, just to confirm, I'm sending your photos to: " + str(text) + ", is that correct?",
                         reply_markup=reply_markup)
     # If we are waiting for confirmation and the right user answered
     elif chat_state == AWAIT_EMAIL_CONFIRMATION and chat_context[0] == user_id:
@@ -345,7 +345,7 @@ def get_email(bot, update):
             # use_sendgrid(bot, update, values[chat_id])
             if value:
                 use_sendgrid(bot, update, value)
-                bot.sendMessage(chat_id, text="An email has been sent to " + value)
+                bot.sendMessage(chat_id, text="An email has been sent to " + str(value))
         else:
             # values[chat_id] = chat_context[1]
             bot.sendMessage(chat_id, text="Okay, no email was sent.")
@@ -353,14 +353,14 @@ def get_email(bot, update):
 
 def change_attribute(subject, key, value):
     try:
-        firebase.patch('/users/' + subject + '/', data={key: value})
+        firebase.patch('/users/' + str(subject) + '/', data={key: value})
     except Exception as e:
         print str(e)
 
 
 def firebase_get(chat_id, value):
     try:
-        return firebase.get('/users/' + str(chat_id) + '/' + value, None)
+        return firebase.get('/users/' + str(chat_id) + '/' + str(value), None)
     except Exception as e:
         print str(e)
 
