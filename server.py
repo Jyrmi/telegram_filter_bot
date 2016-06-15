@@ -64,7 +64,7 @@ def webhook_handler():
         chat_id = update.message.chat.id
 
         current_state = None
-        firebase_dict = firebase_get(chat_id None)
+        firebase_dict = firebase_get(chat_id, None)
         for k, v in firebase_dict.iteritems():
             if k == "state":
                 current_state = v
