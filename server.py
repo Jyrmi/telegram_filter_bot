@@ -64,17 +64,10 @@ def webhook_handler():
         chat_id = update.message.chat.id
 
         current_state = None
-        try:
-            firebase_dict = firebase.get('/users/' + str(chat_id), None)
-            for k, v in firebase_dict.iteritems():
-                if k == "state":
-                    current_state = v
-            print "THIS IS THE CURRENT STATE"
-            print current_state
-        except Exception as e:
-            print "FAILURE TO ASSIGN STATE"
-            print current_state
-            print str(e)
+        firebase_dict = firebase_get(chat_id None)
+        for k, v in firebase_dict.iteritems():
+            if k == "state":
+                current_state = v
         print update.message
         print update.message.text.encode('utf-8')
         print update.message.photo
@@ -95,12 +88,9 @@ def webhook_handler():
             handle_text(text, update, current_state, chat_id)
             # handle_command(text_array[0], update)
         elif photo:
-            try:
-                change_attribute(str(chat_id), "chat_id", str(chat_id))
-                # change_attribute(str(chat_id), "state", "input_feeling")
-                change_attribute(str(chat_id), "state", "MENU")
-            except Exception as e:
-                print str(e)
+            change_attribute(str(chat_id), "chat_id", str(chat_id))
+            # change_attribute(str(chat_id), "state", "input_feeling")
+            change_attribute(str(chat_id), "state", "MENU")
             filter_image(bot, update)
             # full_message = "How are you feeling today?"
             # bot.sendMessage(update.message.chat_id, text=full_message)
@@ -121,30 +111,8 @@ def handle_text(text, update, current_state=None, chat_id=None):
         help(bot, update)
     elif text == '/filters':
         list_filters(bot, update)
-    elif text == '/cancel':
+    elif text == 'cancel':
         cancel(bot, update)
-    # elif current_state == "input_feeling":
-    #     change_attribute(str(chat_id), "state", "input_weight")
-    #     change_attribute(str(chat_id), "feeling", text)
-    #     full_message = "What's your weight today?"
-    #     bot.sendMessage(update.message.chat_id, text=full_message)
-    # elif current_state == "input_weight":
-    #     change_attribute(str(chat_id), "state", "input_memo")
-    #     change_attribute(str(chat_id), "weight", text)
-    #     full_message = "Leave some comments on your photo!"
-    #     bot.sendMessage(update.message.chat_id, text=full_message)
-    # elif current_state == "input_memo":
-    #     change_attribute(str(chat_id), "state", "input_tags")
-    #     change_attribute(str(chat_id), "memo", text)
-    #     full_message = "Leave some tags on this photo!"
-    #     bot.sendMessage(update.message.chat_id, text=full_message)
-    # elif current_state == "input_tags":
-    #     change_attribute(str(chat_id), "state", "complete")
-    #     change_attribute(str(chat_id), "tags", text.split())
-    #     full_message = "Great! Here is a link with all your photos."
-    #     bot.sendMessage(update.message.chat_id, text=full_message)
-    # elif current_state == "/list_filters":
-    #     list_filters(bot, update)
     elif text == '/email':
         # echo(bot, update)
         get_email(bot, update)
@@ -243,44 +211,28 @@ def cancel(bot, update):
     chat_id = update.message.chat_id
     # del state[chat_id]
     # del context[chat_id]
-    try:
-        change_attribute(str(chat_id), "state", "-1")
-        change_attribute(str(chat_id), "context", "-1")
-    except Exception as e:
-        print str(e)
+    change_attribute(str(chat_id), "state", "-1")
+    change_attribute(str(chat_id), "context", "-1")
+
 
 def set_value(bot, update):
     chat_id = update.message.chat_id
     user_id = update.message.from_user.id
     text = update.message.text
     # chat_state = state.get(chat_id, MENU)
-    chat_state = None
-    try:
-        chat_state = firebase.get('/users/' + str(chat_id) + '/state', None)
-    except Exception as e:
-        print str(e)
+    chat_state = firebase_get(chat_id, 'state')
 
     # chat_context = context.get(chat_id, None)
-    chat_context = None
-    try:
-        chat_context = firebase.get('/users/' + str(chat_id) + '/context', None)
-    except Exception as e:
-        print str(e)
+    chat_context = chat_context = firebase_get(chat_id, 'context')
 
     # Since the handler will also be called on messages, we need to check if
     # the message is actually a command
     if chat_state == MENU and 'test' in text:
         # state[chat_id] = AWAIT_FILTER_INPUT # set the state
-        try:
-            change_attribute(str(chat_id), "state", AWAIT_FILTER_INPUT)
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "state", AWAIT_FILTER_INPUT)
 
         # context[chat_id] = user_id  # save the user id to context
-        try:
-            change_attribute(str(chat_id), "context", str(chat_id))
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "context", str(chat_id))
         bot.sendMessage(chat_id,
                         text="Hi there, what filter(s) would you like to apply?\n"
                         "type /cancel to end this conversation",
@@ -289,16 +241,10 @@ def set_value(bot, update):
     # MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION
     elif chat_state == AWAIT_FILTER_INPUT and chat_context == user_id:
         # state[chat_id] = AWAIT_FILTER_CONFIRMATION
-        try:
-            change_attribute(str(chat_id), "state", AWAIT_FILTER_CONFIRMATION)
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "state", AWAIT_FILTER_CONFIRMATION)
         # Save the user id and the answer to context
         # context[chat_id] = (user_id, update.message.text)
-        try:
-            change_attribute(str(chat_id), "context", {str(chat_id): update.message.text})
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "context", {str(chat_id): update.message.text})
         reply_markup = ReplyKeyboardMarkup(
             [[KeyboardButton(FILTER_1), KeyboardButton(FILTER_2), KeyboardButton(FILTER_3)]],
             one_time_keyboard=True)
@@ -310,10 +256,7 @@ def set_value(bot, update):
         # del state[chat_id]
         # del context[chat_id]
         cancel(bot, update)
-        try:
-            change_attribute(str(chat_id), "value", chat_context[1])
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "value", chat_context[1])
 
         if text == FILTER_1:
             # values[chat_id] = chat_context[1]
@@ -358,33 +301,19 @@ def get_email(bot, update):
     user_id = update.message.from_user.id
     text = update.message.text
     # chat_state = state.get(chat_id, MENU)
-    chat_state = None
-    try:
-        chat_state = firebase.get('/users/' + str(chat_id) + '/state', None)
-    except Exception as e:
-        print str(e)
+    chat_state = firebase_get(chat_id, 'state')
 
     # chat_context = context.get(chat_id, None)
-    chat_context = None
-    try:
-        chat_context = firebase.get('/users/' + str(chat_id) + '/context', None)
-    except Exception as e:
-        print str(e)
+    chat_context = firebase_get(chat_id, 'context')
 
     # Since the handler will also be called on messages, we need to check if
     # the message is actually a command
     if chat_state == MENU:
         # state[chat_id] = AWAIT_EMAIL_INPUT # set the state
-        try:
-            change_attribute(str(chat_id), "state", AWAIT_EMAIL_INPUT)
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "state", AWAIT_EMAIL_INPUT)
 
         # context[chat_id] = user_id  # save the user id to context
-        try:
-            change_attribute(str(chat_id), "context", str(chat_id))
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "context", str(chat_id))
         bot.sendMessage(chat_id,
                         text="Hi there, please input your email!\n"
                         "type /cancel to end this conversation",
@@ -393,16 +322,10 @@ def get_email(bot, update):
     # MENU, AWAIT_FILTER_INPUT, AWAIT_FILTER_CONFIRMATION
     elif chat_state == AWAIT_EMAIL_INPUT and chat_context == user_id:
         # state[chat_id] = AWAIT_EMAIL_CONFIRMATION
-        try:
-            change_attribute(str(chat_id), "state", AWAIT_EMAIL_CONFIRMATION)
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "state", AWAIT_EMAIL_CONFIRMATION)
         # Save the user id and the answer to context
         # context[chat_id] = (user_id, update.message.text)
-        try:
-            change_attribute(str(chat_id), "context", {str(chat_id): update.message.text})
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "context", {str(chat_id): update.message.text})
         reply_markup = ReplyKeyboardMarkup(
             [[KeyboardButton(YES), KeyboardButton(NO)]],
             one_time_keyboard=True)
@@ -414,16 +337,8 @@ def get_email(bot, update):
         # del state[chat_id]
         # del context[chat_id]
         cancel(bot, update)
-        try:
-            change_attribute(str(chat_id), "value", chat_context[1])
-        except Exception as e:
-            print str(e)
-
-        value = None
-        try:
-            value = firebase.get('/users/' + str(chat_id) + '/value', None)
-        except Exception as e:
-            print str(e)
+        change_attribute(str(chat_id), "value", chat_context[1])
+        value = firebase_get(chat_id, 'value')
 
         if text == YES:
             # values[chat_id] = chat_context[1]
@@ -437,7 +352,17 @@ def get_email(bot, update):
 
 
 def change_attribute(subject, key, value):
-    firebase.patch('/users/' + subject + '/', data={key: value})
+    try:
+        firebase.patch('/users/' + subject + '/', data={key: value})
+    except Exception as e:
+        print str(e)
+
+
+def firebase_get(chat_id, value):
+    try:
+        return firebase.get('/users/' + str(chat_id) + '/' + value, None)
+    except Exception as e:
+        print str(e)
 
 
 # Define a few command handlers. These usually take the two arguments bot and
