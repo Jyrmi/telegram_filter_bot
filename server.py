@@ -119,7 +119,7 @@ def handle_text(text, update, current_state=None, chat_id=None):
     elif text == '/email':
         use_sendgrid(bot, update)
     else:
-        # echo(bot, update)
+        echo(bot, update)
 
 
 def filter_image(bot, update):
