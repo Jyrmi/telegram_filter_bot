@@ -113,10 +113,13 @@ def handle_text(text, update, current_state=None, chat_id=None):
         list_filters(bot, update)
     # elif text == 'cancel':
     #     cancel(bot, update)
-    elif text.startswith('/email'):
-        # echo(bot, update)
+    elif text.startswith('/set_email'):
         # get_email(bot, update)
         set_email(update, text[7:])
+    elif text == '/email':
+        use_sendgrid(bot, update)
+    else:
+        # echo(bot, update)
 
 
 def filter_image(bot, update):
@@ -274,8 +277,10 @@ def set_email(update, address):
     change_attribute(str(chat_id), 'email_address', address)
 
 
-def use_sendgrid(bot, update, email_address):
+def use_sendgrid(bot, update):
     chat_id = str(update.message.chat_id)
+    email_address = firebase_get(chat_id, 'email_address')
+
     html_message = '<b>Enjoy!</b>'
     message = sendgrid.Mail()
     message.add_to(email_address)
