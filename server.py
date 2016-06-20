@@ -422,9 +422,9 @@ def echo(bot, update):
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
 
-# @app.route('/')
-# def index():
-#     return '.'
+@app.route('/')
+def index():
+    return 'running'
 
 
 # @app.route('/set_webhook', methods=['GET', 'POST'])
