@@ -375,20 +375,6 @@ def echo(bot, update):
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
 
-@app.route('/')
-def index():
-    return 'running'
-
-
-@app.route('/set_webhook', methods=['GET', 'POST'])
-def set_webhook():
-    s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/requests')
-    if s:
-        return "webhook setup ok"
-    else:
-        return "webhook setup failed"
-
-
 @app.route('/requests', methods=['POST'])
 def webhook_handler():
     if request.method == "POST":
@@ -434,6 +420,20 @@ def webhook_handler():
         #     print "firebase patch failed"
         #     print str(e)
     return 'ok'
+
+
+@app.route('/set_webhook', methods=['GET', 'POST'])
+def set_webhook():
+    s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/requests')
+    if s:
+        return "webhook setup ok"
+    else:
+        return "webhook setup failed"
+
+
+@app.route('/')
+def index():
+    return 'running'
 
 
 # if __name__ == "__main__":
