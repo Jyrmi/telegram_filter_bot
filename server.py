@@ -427,11 +427,9 @@ def index():
     return 'running'
 
 
-# @app.route('/set_webhook', methods=['GET', 'POST'])
+@app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
     s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/requests')
-    # s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/HOOK')
-    # s = bot.setWebhook('https://pacific-dusk-98067.herokuapp.com/HOOK')
     if s:
         return "webhook setup ok"
     else:
@@ -439,4 +437,5 @@ def set_webhook():
 
 
 if __name__ == "__main__":
-    set_webhook()
+    # bot.setWebhook('https://telegram-filter-bot.herokuapp.com/requests')
+    # set_webhook()
