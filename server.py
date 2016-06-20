@@ -56,7 +56,7 @@ filters = {
 }
 
 
-@app.route('/HOOK', methods=['POST'])
+@app.route('/', methods=['POST'])
 def webhook_handler():
     if request.method == "POST":
         # retrieve the message in JSON and then transform it to Telegram object
@@ -422,12 +422,12 @@ def echo(bot, update):
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
 
-@app.route('/')
-def index():
-    return '.'
+# @app.route('/')
+# def index():
+#     return '.'
 
 
-@app.route('/set_webhook', methods=['GET', 'POST'])
+# @app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
     s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/HOOK')
     # s = bot.setWebhook('https://pacific-dusk-98067.herokuapp.com/HOOK')
@@ -437,5 +437,5 @@ def set_webhook():
         return "webhook setup failed"
 
 
-# if __name__ == "__main__":
-#     set_webhook()
+if __name__ == "__main__":
+    set_webhook()
