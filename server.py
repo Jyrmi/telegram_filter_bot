@@ -250,8 +250,9 @@ def echo(bot, update):
     bot.sendMessage(update.message.chat_id, text=update.message.text)
 
 
-@app.route('/requests', methods=['POST'])
+@app.route('/activate_webhook', methods=['POST'])
 def webhook_handler():
+    print('hello world')
     if request.method == "POST":
         # retrieve the message in JSON and then transform it to Telegram object
         update = telegram.Update.de_json(request.get_json(force=True))
@@ -284,7 +285,7 @@ def webhook_handler():
 
 @app.route('/set_webhook', methods=['GET', 'POST'])
 def set_webhook():
-    s = bot.setWebhook('https://telegram-filter-bot.herokuapp.com/requests')
+    s = bot.setWebhook('https://stormy-river-76696.herokuapp.com/activate_webhook')
     if s:
         return "webhook setup ok"
     else:
