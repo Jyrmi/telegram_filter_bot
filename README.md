@@ -7,4 +7,7 @@
 > - Currently only Telegram
 > - Perhaps also Slack and Facebook Messenger and Kakao Talk in the future as well
 
-asdkfjalsdkfjalkjsd
+### Some general tips for getting the bot to work
+> - make sure to ping the Telegram API server manually (i.e. visit blablabla/set_webhook)
+> - if you get a response from webhook, but it is 500, try some try:...except Exception as e: statements (because heroku's error logs are not very helpful automatically)
+> - if still doesn't work, try creating a new heroku app, or even creating a totally new bot (with new bot api key) and see if that works
