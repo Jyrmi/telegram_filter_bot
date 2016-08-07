@@ -256,21 +256,24 @@ def webhook_handler():
     if request.method == "POST":
         print('in request.method == post')
         # retrieve the message in JSON and then transform it to Telegram object
-        update = telegram.Update.de_json(request.get_json(force=True))
-        chat_id = update.message.chat.id
+        try:
+            update = telegram.Update.de_json(request.get_json(force=True))
+            chat_id = update.message.chat.id
 
-        current_state = None
-        firebase_dict = firebase_get(chat_id, None)
-        for k, v in firebase_dict.iteritems():
-            if k == "state":
-                current_state = v
-        print update.message
-        print update.message.text.encode('utf-8')
-        print update.message.photo
+            current_state = None
+            firebase_dict = firebase_get(chat_id, None)
+            for k, v in firebase_dict.iteritems():
+                if k == "state":
+                    current_state = v
+            print update.message
+            print update.message.text.encode('utf-8')
+            print update.message.photo
 
-        # Telegram understands UTF-8, so encode text for unicode compatibility
-        text = update.message.text.encode('utf-8')
-        photo = update.message.photo
+            # Telegram understands UTF-8, so encode text for unicode compatibility
+            text = update.message.text.encode('utf-8')
+            photo = update.message.photo
+        except Exception as e:
+            print(e)
 
         if text:
             # text_array = text.split()
