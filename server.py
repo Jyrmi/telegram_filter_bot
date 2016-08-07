@@ -254,6 +254,7 @@ def echo(bot, update):
 def webhook_handler():
     print('hello world')
     if request.method == "POST":
+        print('in request.method == post')
         # retrieve the message in JSON and then transform it to Telegram object
         update = telegram.Update.de_json(request.get_json(force=True))
         chat_id = update.message.chat.id
