@@ -144,12 +144,15 @@ def filter_image(bot, update):
         bot.sendMessage(update.message.chat_id, text=reply)
 
     # save image to be sent as payload
-    img.save(chat_id+'/filtered.png', "PNG")
+    try:
+        img.save(chat_id+'/filtered.png', "PNG")
 
-    if applied_filters:
-        bot.sendPhoto(update.message.chat_id,
-                      photo=open(chat_id+'/filtered.png', 'rb'),
-                      caption=' '.join(applied_filters))
+        if applied_filters:
+            bot.sendPhoto(update.message.chat_id,
+                          photo=open(chat_id+'/filtered.png', 'rb'),
+                          caption=' '.join(applied_filters))
+    except Exception as e:
+        print str(e)
 
 
 def make_linear_ramp(white):
