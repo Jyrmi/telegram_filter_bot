@@ -144,7 +144,7 @@ def filter_image(bot, update):
         bot.sendMessage(update.message.chat_id, text=reply)
 
     # save image to be sent as payload
-    img.save(chat_id+'/filtered.png')
+    img.save(chat_id+'/filtered.png', "PNG")
 
     if applied_filters:
         bot.sendPhoto(update.message.chat_id,
