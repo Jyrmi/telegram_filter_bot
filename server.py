@@ -121,6 +121,12 @@ def filter_image(bot, update):
             img = ImageOps.invert(img)
             applied_filters.append('inverted')
 
+        elif 'circle' in f:
+            mask = Image.open('mask.png').convert('L')
+            img = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
+            img.putalpha(mask)
+            applied_filters.append('circle')
+
         # The specified filter is one of the ImageFilter module ones
         elif f in filters:
             img = img.filter(filters[f])
