@@ -122,7 +122,7 @@ def filter_image(bot, update):
             applied_filters.append('inverted')
 
         elif 'circle' in f:
-            mask = Image.open('mask_3.png').convert('L')
+            mask = Image.open('./mask_1.png').convert('L')
             img = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
             img.putalpha(mask)
             applied_filters.append('circle')
@@ -143,10 +143,12 @@ def filter_image(bot, update):
 
         bot.sendMessage(update.message.chat_id, text=reply)
 
-    img.save(chat_id+'/filtered.jpg')
+    # save image to be sent as payload
+    img.save(chat_id+'/filtered.png')
+
     if applied_filters:
         bot.sendPhoto(update.message.chat_id,
-                      photo=open(chat_id+'/filtered.jpg', 'rb'),
+                      photo=open(chat_id+'/filtered.png', 'rb'),
                       caption=' '.join(applied_filters))
 
 
