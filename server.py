@@ -127,7 +127,7 @@ def filter_image(bot, update):
             img.putalpha(mask)
             # applied_filters.append('circle')
             print('before save okay')
-            img.save(chat_id+'/filtered.png', "PNG")
+            img.save(chat_id+'/filtered.png')
             print('after save okay')
             bot.sendDocument(update.message.chat_id,
                              document=open(chat_id+'/filtered.png', 'rb'))
