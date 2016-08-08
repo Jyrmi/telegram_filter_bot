@@ -125,7 +125,10 @@ def filter_image(bot, update):
             mask = Image.open('./mask_1.png').convert('L')
             img = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
             img.putalpha(mask)
-            applied_filters.append('circle')
+            # applied_filters.append('circle')
+            img.save(chat_id+'/filtered.png', "PNG")
+            bot.sendDocument(update.message.chat_id,
+                             document=open(chat_id+'/filtered.png', 'rb'))
 
         # The specified filter is one of the ImageFilter module ones
         elif f in filters:
@@ -144,15 +147,12 @@ def filter_image(bot, update):
         bot.sendMessage(update.message.chat_id, text=reply)
 
     # save image to be sent as payload
-    try:
-        img.save(chat_id+'/filtered.png', "PNG")
+    img.save(chat_id+'/filtered.jpg')
 
-        if applied_filters:
-            bot.sendPhoto(update.message.chat_id,
-                          photo=open(chat_id+'/filtered.png', 'rb'),
-                          caption=' '.join(applied_filters))
-    except Exception as e:
-        print str(e)
+    if applied_filters:
+        bot.sendPhoto(update.message.chat_id,
+                      photo=open(chat_id+'/filtered.jpg', 'rb'),
+                      caption=' '.join(applied_filters))
 
 
 def make_linear_ramp(white):
