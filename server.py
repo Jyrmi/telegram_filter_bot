@@ -96,7 +96,7 @@ def filter_image(bot, update):
     bot.getFile(file_id).download(chat_id+'/download.jpg')
 
     try:
-        files = {'file': open(chat_id+'download.jpg', 'rb')}
+        files = {'file': open(chat_id+'/download.jpg', 'rb')}
         new_tags = create_tags(files)
         bot.sendMessage(update.message.chat_id, text=new_tags)
     except Exception as e:
