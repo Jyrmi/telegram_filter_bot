@@ -22,6 +22,8 @@ from PIL import Image, ImageFilter, ImageOps
 import logging
 import sendgrid
 from firebase import firebase
+import requests
+import json
 
 # Firebase is used to track user state and information
 firebase_db = os.environ['FIREBASE_DB']
@@ -92,6 +94,11 @@ def filter_image(bot, update):
         os.makedirs(chat_id)
 
     bot.getFile(file_id).download(chat_id+'/download.jpg')
+
+    files = {'file': open('download.jpg', 'rb')}
+    new_tags = create_tags(files)
+    bot.sendMessage(update.message.chat_id, text=new_tags)
+
     img = Image.open(chat_id+'/download.jpg')
 
     # No filter provided. Use a default filter.
@@ -261,6 +268,24 @@ def echo(bot, update):
     This function only serves the purpose of making sure the bot is activated
     """
     bot.sendMessage(update.message.chat_id, text=update.message.text)
+
+
+def create_tags(files):
+    """
+    Repeat any text message as this bot's default behavior.
+
+    This function only serves the purpose of making sure the bot is activated
+    """
+    url = "https://api.projectoxford.ai/vision/v1.0/describe?maxCandidates=1"
+    headers = {
+        "Ocp-Apim-Subscription-Key": os.environ['MICROSOFT_KEY']
+        }
+    r = requests.post(url, stream=False, headers=headers, files=files)
+    print(r.text)
+    json_response = json.loads(r.text)
+    print(json_response)
+    print(json_response['description']['tags'])
+    return json_response['description']['tags']
 
 
 @app.route('/activate_webhook', methods=['POST'])
