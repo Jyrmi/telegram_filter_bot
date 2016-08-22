@@ -49,7 +49,7 @@ bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
 # YES, NO = ("YES", "NO")
 
 
-class User(db.Model):
+class user(db.Model):
     """
     This is a simple User model.
 
@@ -82,7 +82,7 @@ filters = {
 
 def exists(chat_id):
     try:
-        return db.session.query(db.exists().where(User.identifier == chat_id)).scalar()
+        return db.session.query(db.exists().where(user.identifier == chat_id)).scalar()
     except Exception as e:
         print(e)
         return False
@@ -91,11 +91,11 @@ def exists(chat_id):
 def check_or_create_db_entry(chat_id):
     try:
         if not exists(chat_id):
-            user = User(chat_id, 'expect_filter')
+            user = user(chat_id, 'expect_filter')
             db.session.add(user)
             db.session.commit()
         else:
-            user = User.query.filter_by(identifier=chat_id).first()
+            user = user.query.filter_by(identifier=chat_id).first()
             user.state = 'expect_filter'
             db.session.commit()
     except Exception as e:
