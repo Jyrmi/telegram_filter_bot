@@ -147,7 +147,7 @@ def filter_image(bot, update):
     caption = update.message.text.encode('utf-8').lower().replace(',', '').split(' ')
 
     for f in caption:
-
+        print("made it into the caption loop")
         # Image.convert can easily turn an image into greyscale
         if 'greyscale' in f:
             img = img.convert('L')
@@ -358,6 +358,7 @@ def webhook_handler():
         photo = update.message.photo
 
         if text and exists(chat_id):
+            print("made it into the text function")
             filter_image(bot, update)
         elif photo:
             check_or_create_db_entry(chat_id)
