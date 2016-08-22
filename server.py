@@ -81,7 +81,11 @@ filters = {
 
 
 def exists(chat_id):
-    return db.session.query(db.exists().where(User.chat_id == chat_id)).scalar()
+    try:
+        return db.session.query(db.exists().where(User.chat_id == chat_id)).scalar()
+    except Exception as e:
+        print(e)
+        return False
 
 
 def check_or_create_db_entry(chat_id):
