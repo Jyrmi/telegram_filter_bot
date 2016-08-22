@@ -25,6 +25,8 @@ from firebase import firebase
 import requests
 import json
 
+from flask.ext.sqlalchemy import SQLAlchemy
+
 # Firebase is used to track user state and information
 firebase_db = os.environ['FIREBASE_DB']
 firebase = firebase.FirebaseApplication(firebase_db, None)
@@ -32,6 +34,9 @@ firebase = firebase.FirebaseApplication(firebase_db, None)
 sg = sendgrid.SendGridClient(os.environ['SENDGRID_KEY'])
 
 app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+db = SQLAlchemy(app)
 
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
