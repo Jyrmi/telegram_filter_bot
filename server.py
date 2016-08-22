@@ -56,15 +56,15 @@ class User(db.Model):
     For now, it will just hold the current user state
     """
     id = db.Column(db.Integer, primary_key=True)
-    chat_id = db.Column(db.String(80), unique=True)
+    identifier = db.Column(db.String(80), unique=True)
     state = db.Column(db.String(80))
 
     def __init__(self, chat_id, state):
-        self.chat_id = chat_id
+        self.identifier = chat_id
         self.state = state
 
     def __repr__(self):
-        return '<ChatId: %r>' % self.chat_id
+        return '<ChatId: %r>' % self.identifier
 
 
 filters = {
@@ -82,7 +82,7 @@ filters = {
 
 def exists(chat_id):
     try:
-        return db.session.query(db.exists().where(User.chat_id == chat_id)).scalar()
+        return db.session.query(db.exists().where(User.identifier == chat_id)).scalar()
     except Exception as e:
         print(e)
         return False
@@ -95,7 +95,7 @@ def check_or_create_db_entry(chat_id):
             db.session.add(user)
             db.session.commit()
         else:
-            user = User.query.filter_by(chat_id=chat_id).first()
+            user = User.query.filter_by(identifier=chat_id).first()
             user.state = 'expect_filter'
             db.session.commit()
     except Exception as e:
