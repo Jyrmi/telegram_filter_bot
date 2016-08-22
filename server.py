@@ -91,12 +91,12 @@ def exists(chat_id):
 def check_or_create_db_entry(chat_id):
     try:
         if not exists(chat_id):
-            user = user(chat_id, 'expect_filter')
-            db.session.add(user)
+            user1 = user(chat_id, 'expect_filter')
+            db.session.add(user1)
             db.session.commit()
         else:
-            user = user.query.filter_by(identifier=chat_id).first()
-            user.state = 'expect_filter'
+            user1 = user.query.filter_by(identifier=chat_id).first()
+            user1.state = 'expect_filter'
             db.session.commit()
     except Exception as e:
         print(e)
