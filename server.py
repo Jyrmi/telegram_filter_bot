@@ -37,7 +37,6 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
-
 global bot
 bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
 
@@ -48,6 +47,24 @@ bot = telegram.Bot(token=os.environ['TELEGRAM_KEY'])
 # # Define the filter names here
 # FILTER_1, FILTER_2, FILTER_3 = ("FILTER_1", "FILTER_2", "FILTER_3")
 # YES, NO = ("YES", "NO")
+
+
+class User(db.Model):
+    """
+    This is a simple User model.
+
+    For now, it will just hold the current user state
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.String(80), unique=True)
+    state = db.Column(db.String(80))
+
+    def __init__(self, chat_id, state):
+        self.chat_id = chat_id
+        self.state = state
+
+    def __repr__(self):
+        return '<ChatId: %r>' % self.chat_id
 
 
 filters = {
@@ -63,8 +80,24 @@ filters = {
 }
 
 
+def exists(chat_id):
+    return db.session.query(db.exists().where(User.chat_id == chat_id)).scalar()
+
+
+def check_or_create_db_entry(chat_id):
+    if not exists(chat_id):
+        user = User(chat_id, 'expect_filter')
+        db.session.add(user)
+        db.session.commit()
+    else:
+        user = User.query.filter_by(chat_id=chat_id).first()
+        user.state = 'expect_filter'
+        db.session.commit()
+
+
 def handle_text(text, update, current_state=None, chat_id=None):
     text = update.message.text.encode('utf-8')
+
     if text == '/start':
         start(bot, update)
     elif text == '/help':
@@ -111,8 +144,8 @@ def filter_image(bot, update):
 
     # No filter provided. Use a default filter.
     reply = ', '.join(filters.keys())
+    caption = update.message.text.encode('utf-8').lower().replace(',', '').split(' ')
 
-    caption = update.message.caption.lower().replace(',', '').split(' ')
     for f in caption:
 
         # Image.convert can easily turn an image into greyscale
@@ -324,15 +357,10 @@ def webhook_handler():
         text = update.message.text.encode('utf-8')
         photo = update.message.photo
 
-        if text:
-            # text_array = text.split()
-            print chat_id
-            print text
-            handle_text(text, update, current_state, chat_id)
-        elif photo:
-            change_attribute(str(chat_id), "chat_id", str(chat_id))
-            change_attribute(str(chat_id), "state", "MENU")
+        if text and exists(chat_id):
             filter_image(bot, update)
+        elif photo:
+            check_or_create_db_entry(chat_id)
     return 'ok'
 
 
